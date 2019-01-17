@@ -267,6 +267,7 @@ class Rabbit_functions_mixin:
             self.rainbowrab_btn.setEnabled(True)
             self.FTcontrast_btn.setEnabled(True)
             self.plotSBvsdelay_btn.setEnabled(True)
+            self.plotPulseInTime_btn.setEnabled(True)
             self.clear_btn.setEnabled(True)
 
             self.window().updateglobvar_fn()
