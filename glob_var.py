@@ -7,9 +7,10 @@ ME = constants.electron_mass
 QE = constants.elementary_charge
 C = constants.speed_of_light
 
+# Ionization potentials
 IP_HE = 24.58739 #Helium
 IP_NE = 21.56454 #Neon
-IP_AR = 15.75961  #Argon
+IP_AR = 15.75961 #Argon
 IP_KR = 13.99961 #Krypton
 IP_XE = 12.12984 #Xenon
 IP_N2_X = 15.58 #N2 X
@@ -36,12 +37,15 @@ cur_Ip = 0.0
 cur_nu = 0.0
 cur_SBi = 0
 first_harm = 0
+# central wavelength of the IR field in nm
 lambda_start = 800
+# central frequency of the IR field in Hz
 cur_nu = C / (lambda_start * 1e-9)
 cur_Vp = 0 # retarding potential
 cur_L = 2 # length of the TOF
 
-#energy conversion
+# energy conversion
+# Minimum energy of the energy axis (energy_vect) in eV. HEV*cur_nu = energy of an IR photon in eV.
 elow = (first_harm - 1) * HEV * cur_nu
 ehigh = float(52 * HEV * cur_nu)
 dE = 0.01
@@ -51,12 +55,18 @@ scanstep_nm = 25
 scanstep_fs = scanstep_nm*2/(C*1e-6)
 stepsnb = 0
 
+# delay axis in femtoseconds.
 delay_vect = np.zeros([1,1])
+# energy axis in eV. Starts at elow and stops at ehigh.
 energy_vect = np.zeros([1,1])
+# rabbit_mat[arg_delay, arg_energy] gives the signal at the energy energy_vect[arg_energy] at delay delay_vect[arg_delay]
 rabbit_mat = np.zeros([1,1])
 rabbitxuvsub_mat = np.zeros([1,1])
 xuvonly_vect = np.zeros([1,1])
+# number of sidebands that the program analyses.
 bandsnb = 5
+# for each sideband (SB) bands_vect contains a couple of values in eV.
+# they correspond to the minimum and maximum value defining the energy band of the SB.
 bands_vect = np.zeros([1,1])
 
 # after FT

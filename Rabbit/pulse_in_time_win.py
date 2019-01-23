@@ -52,7 +52,7 @@ class PulseInTimeWin(QDialog):
         except Exception:
            print(traceback.format_exception(*sys.exc_info()))
 
-    # This fonction calculates the intensity of the pulse. It uses cts.peak_phase
+    # This fonction calculates the field of the pulse. It uses cts.peak_phase
     # which contains the spectral dephasings between two consecutive harmonics
     # We suppose that it has the form cts.peak_phase = [phase_SB_14, phase_SB_16, …]
     def temporal_profile_fn(self, time):
@@ -75,19 +75,19 @@ class PulseInTimeWin(QDialog):
         harmonics_amplitudes = []
 
         for i in range(cts.bandsnb + 1):
+            # Find the argument of energy_vect which corresponds to the closest value of the harmonic energy
             harmonic_energy_argument = np.argmin(abs(cts.energy_vect - (cts.first_harm + 2 * i) * h_nu))
-            # harmonics_energy_arguments.append(harmonic_energy_argument)
-            # harmonics_energies.append(cts.energy_vect[harmonic_energy_argument])
             # We take arbitrarily the amplitudes of the harmonics at delay zero
             harmonics_amplitudes.append(cts.rabbit_mat[0, harmonic_energy_argument])
-
-        print(harmonics_amplitudes)
 
         # fields_sum is the sum of the fields of each harmonic
         fields_sum = 0.0
 
         for i in range(cts.bandsnb + 1):
-            fields_sum += harmonics_amplitudes[i] * np.exp(- 2 * 1j * np.pi * (cts.first_harm + 2*i) * cts.cur_nu * time + harmonics_spectral_phases[i])
+            fields_sum += harmonics_amplitudes[i]*np.exp(
+                -2*1j*np.pi*cts.cur_nu*(cts.first_harm + 2*i)*time
+                + 1j*harmonics_spectral_phases[i]
+            )
 
         # Return the calculated field
         return np.real(fields_sum)
