@@ -43,9 +43,12 @@ class PulseInTimeWin(QDialog):
         try:
             self.ax.cla()
             self.ax.set_xlabel("Time", fontsize=10)
-            self.ax.set_ylabel("Intensity", fontsize=10)
+            self.ax.set_ylabel("XUV", fontsize=10)
 
-            self.ax.plot(time_axis, self.temporal_profile_fn(time_axis))
+            self.ax.plot(time_axis, self.temporal_profile_fn(time_axis, "Field"), label="Field")
+            self.ax.plot(time_axis, self.temporal_profile_fn(time_axis, "Intensity"), label="Intensity")
+
+            self.ax.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3, ncol=7, mode="expand", borderaxespad=0.)
 
             self.fc.draw()
 
@@ -55,39 +58,61 @@ class PulseInTimeWin(QDialog):
     # This fonction calculates the field of the pulse. It uses cts.peak_phase
     # which contains the spectral dephasings between two consecutive harmonics
     # We suppose that it has the form cts.peak_phase = [phase_SB_14, phase_SB_16, …]
-    def temporal_profile_fn(self, time):
+    def temporal_profile_fn(self, time, representation):
 
         harmonics_spectral_phases = []
 
-        # In this loop we calculate the harmonics spectral phases.
-        # The first harmonic phase is zero by convention.
-        # We suppose that phase_SB_q+1 = phase_q - phase_q+2.
-        for i in range(cts.bandsnb + 1):
+        ### In this loop we calculate the harmonics spectral phases.
+
+        # The intensity of the sidebands is given by I_SB_2q = A + B cos (2*omega*tau + phase_SB_2q)
+        # We suppose phase_SB_2q = - phase_harm_2q+1 + phase_harm_2q-1 and neglect the atomic phase.
+        # The first harmonic phase is said to be zero and give a phase reference.
+        for k in range(cts.bandsnb + 1):
             spectral_phase = 0.0
 
-            for j in range(i):
-                spectral_phase -= cts.peak_phase[j]
+            for l in range(k):
+                spectral_phase -= cts.peak_phase[l]
 
             harmonics_spectral_phases.append(spectral_phase)
 
-        # Construct the amplitudes of the harmonics
-        h_nu = cts.HEV * cts.cur_nu
+        # DEBUG
+        # print(harmonics_spectral_phases)
+
+        ### In this loop we calculate the amplitudes of the harmonics
+
+        h_nu = cts.HEV * cts.cur_nu # Energy of an IR photon in eV
         harmonics_amplitudes = []
 
-        for i in range(cts.bandsnb + 1):
+        for k in range(cts.bandsnb + 1):
             # Find the argument of energy_vect which corresponds to the closest value of the harmonic energy
-            harmonic_energy_argument = np.argmin(abs(cts.energy_vect - (cts.first_harm + 2 * i) * h_nu))
-            # We take arbitrarily the amplitudes of the harmonics at delay zero
-            harmonics_amplitudes.append(cts.rabbit_mat[0, harmonic_energy_argument])
-
-        # fields_sum is the sum of the fields of each harmonic
-        fields_sum = 0.0
-
-        for i in range(cts.bandsnb + 1):
-            fields_sum += harmonics_amplitudes[i]*np.exp(
-                -2*1j*np.pi*cts.cur_nu*(cts.first_harm + 2*i)*time
-                + 1j*harmonics_spectral_phases[i]
+            harmonic_energy_argument = np.argmin(abs(cts.energy_vect - (cts.first_harm + 2*k)*h_nu))
+            # We take the mean value of the harmonic amplitude over the delay and take the square root
+            harmonics_amplitudes.append(
+                np.sqrt(
+                    np.mean(
+                        cts.rabbit_mat[:, harmonic_energy_argument]
+                    )
+                )
             )
 
-        # Return the calculated field
-        return np.real(fields_sum)
+        # DEBUG
+        # print(harmonics_amplitudes)
+
+        ### In this loop we calculate the XUV field
+
+        # XUV field is the sum of the fields of each harmonic
+        XUV_field = 0.0
+
+        for k in range(cts.bandsnb + 1):
+            XUV_field += harmonics_amplitudes[k]*np.exp(1j*(
+                2*np.pi*cts.cur_nu*(cts.first_harm + 2*k)*time
+                + harmonics_spectral_phases[k]
+            ))
+
+        if representation == "Field":
+            # Return the XUV field
+            return np.real(XUV_field)
+
+        elif representation == "Intensity":
+            # Return the XUV intensity
+            return np.abs(XUV_field)

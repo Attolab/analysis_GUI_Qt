@@ -37,10 +37,8 @@ cur_Ip = 0.0
 cur_nu = 0.0
 cur_SBi = 0
 first_harm = 0
-# central wavelength of the IR field in nm
-lambda_start = 800
-# central frequency of the IR field in Hz
-cur_nu = C / (lambda_start * 1e-9)
+lambda_start = 800 # central wavelength of the IR field in nm
+cur_nu = C / (lambda_start * 1e-9) # central frequency of the IR field in Hz
 cur_Vp = 0 # retarding potential
 cur_L = 2 # length of the TOF
 

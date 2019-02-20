@@ -59,7 +59,6 @@ class SBvsDelayWin(QDialog):
             self.a1.append(popt[1])
             self.phi.append(popt[2])
 
-        print(self.a1)
         self.parent().window().updateglobvar_fn()
 
     def init_graphlayout(self) -> None:
