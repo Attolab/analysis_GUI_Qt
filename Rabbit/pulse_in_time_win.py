@@ -75,9 +75,6 @@ class PulseInTimeWin(QDialog):
 
             harmonics_spectral_phases.append(spectral_phase)
 
-        # DEBUG
-        # print(harmonics_spectral_phases)
-
         ### In this loop we calculate the amplitudes of the harmonics
 
         h_nu = cts.HEV * cts.cur_nu # Energy of an IR photon in eV
@@ -94,9 +91,6 @@ class PulseInTimeWin(QDialog):
                     )
                 )
             )
-
-        # DEBUG
-        # print(harmonics_amplitudes)
 
         ### In this loop we calculate the XUV field
 
