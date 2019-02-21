@@ -10,7 +10,7 @@ import numpy as np
 import glob_var as cts
 import other_widgets as ow
 import _import_export as ie
-from Rabbit import FT_contrast_win as ftcw, Rabbit_select_bands as Rsb, _Rabbit_functions as Raf, SB_vs_delay_win as sbdw
+from Rabbit import FT_contrast_win as ftcw, Rabbit_select_bands as Rsb, _Rabbit_functions as Raf, SB_vs_delay_win as sbdw, pulse_in_time_win as pitw
 
 
 class RabbitWin(QWidget, ie.Imp_Exp_Mixin, Raf.Rabbit_functions_mixin):
@@ -275,16 +275,21 @@ class RabbitWin(QWidget, ie.Imp_Exp_Mixin, Raf.Rabbit_functions_mixin):
         plotbtn_box.setFixedSize(300, 60)
 
         self.plotSBvsdelay_btn = QPushButton("SB vs delay", self)
+        self.plotPulseInTime_btn = QPushButton("Pulse in time", self)
 
         self.plotSBvsdelay_btn.clicked.connect(self.plotSBvsdelay_lr)
+        self.plotPulseInTime_btn.clicked.connect(self.plotPulseInTime_lr)
 
-        plotbtnlayout.addWidget(self.plotSBvsdelay_btn)
+        plotbtnlayout.addWidget(self.plotSBvsdelay_btn, 0, 0)
+        plotbtnlayout.addWidget(self.plotPulseInTime_btn, 0, 1)
+
         plotbtn_box.setLayout(plotbtnlayout)
 
         for widget in plotbtn_box.children():
             if isinstance(widget, QPushButton):
                 widget.setSizePolicy(0, 0)
                 widget.setEnabled(False)
+
         self.commandLayout.addWidget(plotbtn_box)
 
     def init_graphlayout(self):
@@ -365,6 +370,13 @@ class RabbitWin(QWidget, ie.Imp_Exp_Mixin, Raf.Rabbit_functions_mixin):
         ''' "[plot] SB vs delay" button listener. Opens a new window'''
         try:
             w = sbdw.SBvsDelayWin(self) # new class defined below
+        except Exception:
+            print(traceback.format_exception(*sys.exc_info()))
+
+    def plotPulseInTime_lr(self):
+        ''' "[plot] Pulse in time" button listener. Opens a new window'''
+        try:
+            w = pitw.PulseInTimeWin(self) # new class defined below
         except Exception:
             print(traceback.format_exception(*sys.exc_info()))
 
