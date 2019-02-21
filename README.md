@@ -1,5 +1,7 @@
 # analysis_GUI_Qt
 
+## Installation
+
 2018/03/09
 
 You just need Anaconda 3 to run this code.
@@ -19,3 +21,7 @@ finally:
 pip install ./ -I --no-deps
 ```
 Then run the file main_GUI_Qt.py
+
+## Documentation
+
+[https://github.com/Attolab/analysis_GUI_Qt/wiki/Documentation](https://github.com/Attolab/analysis_GUI_Qt/wiki/Documentation)
