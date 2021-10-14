@@ -91,8 +91,6 @@ class CalibWin(QWidget, _calf.calib_functions_mixin, _ie.Imp_Exp_Mixin):
         self.calibBool = False
         self.peaksfound = False
 
-        self.spectro = 'TOF'
-
         self.thxmin = 0
         self.thy = 0
         self.thxmax = 0
@@ -109,8 +107,7 @@ class CalibWin(QWidget, _calf.calib_functions_mixin, _ie.Imp_Exp_Mixin):
         btnlayout.setSpacing(10)
         btn_gb = QGroupBox()
 
-        self.load_btn = QPushButton("Load TOF", self)
-        self.load_VMI_btn = QPushButton("Load VMI", self)
+        self.load_btn = QPushButton("Load data", self)
         self.rmbgnd_btn = QPushButton("Remove bgnd", self)
         self.findpeaks_btn = QPushButton("Find peaks", self)
         self.rmpeaks_btn = QPushButton("Remove peaks", self)
@@ -157,8 +154,7 @@ class CalibWin(QWidget, _calf.calib_functions_mixin, _ie.Imp_Exp_Mixin):
             self.spectrum_i_le.setEnabled(False)
             self.scan_i_le.setEnabled(False)
 
-        self.load_btn.clicked.connect(self.load_lr)
-        self.load_VMI_btn.clicked.connect(self.load_VMI_lr)
+        self.load_btn.clicked.connect(self.loadfile_lr)
         self.rmbgnd_btn.clicked.connect(self.rmbgnd_lr)
         self.findpeaks_btn.clicked.connect(self.findpeaks_lr)
         self.rmpeaks_btn.clicked.connect(self.removepeaks_lr)
@@ -175,7 +171,6 @@ class CalibWin(QWidget, _calf.calib_functions_mixin, _ie.Imp_Exp_Mixin):
         self.software_combo.currentIndexChanged.connect(self.software_combo_lr)
 
         btnlayout.addWidget(self.load_btn, 0, 0)
-        btnlayout.addWidget(self.load_VMI_btn, 0, 1)
         btnlayout.addWidget(QLabel("Scan"), 1, 0)
         btnlayout.addWidget(self.scan_i_le, 1, 1)
         btnlayout.addWidget(QLabel("Spectrum"), 2, 0)
@@ -287,11 +282,11 @@ class CalibWin(QWidget, _calf.calib_functions_mixin, _ie.Imp_Exp_Mixin):
         ''' In commandLayout - Initialization of the fit parameter section with a, t0 and c. First line: guess values calculated
             from the experimental parameters. Second line: fitted values.'''
 
-        self.fitpar_box = QGroupBox()
-        self.fitpar_box.setTitle("Calibration parameters")
-        self.fitpar_box.setSizePolicy(0, 0)
-        self.fitparlayout = QGridLayout()
-        self.fitparlayout.setSpacing(10)
+        fitpar_box = QGroupBox()
+        fitpar_box.setTitle("Calibration parameters")
+        fitpar_box.setSizePolicy(0, 0)
+        fitparlayout = QGridLayout()
+        fitparlayout.setSpacing(10)
 
         self.aguess_lb = QLabel(self)
         self.afit_lb = QLabel(self)
@@ -300,28 +295,28 @@ class CalibWin(QWidget, _calf.calib_functions_mixin, _ie.Imp_Exp_Mixin):
         self.cguess_lb = QLabel(self)
         self.cfit_lb = QLabel(self)
 
-        self.fitparlayout.addWidget(QLabel("a"), 0, 0)
-        self.fitparlayout.addWidget(self.aguess_lb, 1, 0)
-        self.fitparlayout.addWidget(self.afit_lb, 2, 0)
-        self.fitparlayout.addWidget(QLabel("t0"), 0, 1)
-        self.fitparlayout.addWidget(self.t0guess_lb, 1, 1)
-        self.fitparlayout.addWidget(self.t0fit_lb, 2, 1)
-        self.fitparlayout.addWidget(QLabel("c"), 0, 2)
-        self.fitparlayout.addWidget(self.cguess_lb, 1, 2)
-        self.fitparlayout.addWidget(self.cfit_lb, 2, 2)
-        self.fitparlayout.addWidget(QLabel("guess"), 1, 3)
-        self.fitparlayout.addWidget(QLabel("calc"), 2, 3)
+        fitparlayout.addWidget(QLabel("a"), 0, 0)
+        fitparlayout.addWidget(self.aguess_lb, 1, 0)
+        fitparlayout.addWidget(self.afit_lb, 2, 0)
+        fitparlayout.addWidget(QLabel("t0"), 0, 1)
+        fitparlayout.addWidget(self.t0guess_lb, 1, 1)
+        fitparlayout.addWidget(self.t0fit_lb, 2, 1)
+        fitparlayout.addWidget(QLabel("c"), 0, 2)
+        fitparlayout.addWidget(self.cguess_lb, 1, 2)
+        fitparlayout.addWidget(self.cfit_lb, 2, 2)
+        fitparlayout.addWidget(QLabel("guess"), 1, 3)
+        fitparlayout.addWidget(QLabel("calc"), 2, 3)
         text = "q=a*1/(t-t0)²+c"
-        self.fitparlayout.addWidget(QLabel(text), 1, 4)
+        fitparlayout.addWidget(QLabel(text), 1, 4)
 
-        self.fitpar_box.setLayout(self.fitparlayout)
+        fitpar_box.setLayout(fitparlayout)
 
-        for widget in self.fitpar_box.children():
+        for widget in fitpar_box.children():
             if isinstance(widget, QLabel) and widget.text() != text:
                 widget.setSizePolicy(0, 0)
                 widget.setFixedSize(55, 15)
 
-        self.commandlayout.addWidget(self.fitpar_box)
+        self.commandlayout.addWidget(fitpar_box)
 
     def init_envectlayout(self):
         ''' In commandLayout - Initialization of the resulting energy vector section, with elow, ehigh and dE'''
@@ -493,62 +488,6 @@ class CalibWin(QWidget, _calf.calib_functions_mixin, _ie.Imp_Exp_Mixin):
     #################################################################################
     ############################ Other methods ######################################
 
-    def load_lr(self):
-        self.spectro = 'TOF'
-        self.loadfile_lr()
-        self.retpot_le.setEnabled(True)
-        self.toflength_le.setEnabled(True)
-
-        for widget in self.fitpar_box.children():
-            if isinstance(widget, QGridLayout):
-                pass
-            else:
-                # self.noise_layout.removeWidget(widget)
-                widget.setParent(None)
-
-        self.fitparlayout.addWidget(QLabel("a"), 0, 0)
-        self.fitparlayout.addWidget(self.aguess_lb, 1, 0)
-        self.fitparlayout.addWidget(self.afit_lb, 2, 0)
-        self.fitparlayout.addWidget(QLabel("t0"), 0, 1)
-        self.fitparlayout.addWidget(self.t0guess_lb, 1, 1)
-        self.fitparlayout.addWidget(self.t0fit_lb, 2, 1)
-        self.fitparlayout.addWidget(QLabel("c"), 0, 2)
-        self.fitparlayout.addWidget(self.cguess_lb, 1, 2)
-        self.fitparlayout.addWidget(self.cfit_lb, 2, 2)
-        self.fitparlayout.addWidget(QLabel("guess"), 1, 3)
-        self.fitparlayout.addWidget(QLabel("calc"), 2, 3)
-        text = "q=a*1/(t-t0)²+c"
-        self.fitparlayout.addWidget(QLabel(text), 1, 4)
-
-    def load_VMI_lr(self):
-        self.spectro = 'VMI'
-        self.loadfile_lr()
-        self.retpot_le.setEnabled(False)
-        self.toflength_le.setEnabled(False)
-
-        for widget in self.fitpar_box.children():
-            if isinstance(widget, QGridLayout):
-                pass
-            else:
-                # self.noise_layout.removeWidget(widget)
-                widget.setParent(None)
-
-        self.Afit_lb = QLabel(self)
-        self.Aguess_lb = QLabel(str(cts.Aguess))
-        self.Bfit_lb = QLabel(self)
-        self.Bguess_lb = QLabel(str(cts.Bguess))
-
-        self.fitparlayout.addWidget(QLabel("A"), 0, 0)
-        self.fitparlayout.addWidget(self.Aguess_lb, 1, 0)
-        self.fitparlayout.addWidget(self.Afit_lb, 2, 0)
-        self.fitparlayout.addWidget(QLabel("B"), 0, 1)
-        self.fitparlayout.addWidget(self.Bguess_lb, 1, 1)
-        self.fitparlayout.addWidget(self.Bfit_lb, 2, 1)
-        self.fitparlayout.addWidget(QLabel("guess"), 1, 3)
-        self.fitparlayout.addWidget(QLabel("calc"), 2, 3)
-        text = "q = (A*r^2 + B*r^3 + Ip)/hnu"
-        self.fitparlayout.addWidget(QLabel(text), 1, 4)
-
     def software_combo_lr(self, i):
         # Labview 2013
         if i == 0:
@@ -621,13 +560,9 @@ class CalibWin(QWidget, _calf.calib_functions_mixin, _ie.Imp_Exp_Mixin):
         ''' Updating the fit parameters on the window'''
 
         if (self.calibBool):
-            if self.spectro == 'TOF':
-                self.afit_lb.setText("{:.3e}".format(cts.afit))
-                self.t0fit_lb.setText("{:.3e}".format(cts.t0fit))
-                self.cfit_lb.setText("{:.3f}".format(cts.cfit))
-            elif self.spectro == 'VMI':
-                self.Afit_lb.setText("{:.3e}".format(cts.Afit))
-                self.Bfit_lb.setText("{:.3e}".format(cts.Bfit))
+            self.afit_lb.setText("{:.3e}".format(cts.afit))
+            self.t0fit_lb.setText("{:.3e}".format(cts.t0fit))
+            self.cfit_lb.setText("{:.3f}".format(cts.cfit))
 
     def update_envect_fn(self):
         ''' Updating th energy vector parameters with the values written in the associated QLineEdit objects'''

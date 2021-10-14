@@ -17,10 +17,8 @@ class SBvsDelayWin(QDialog):
         super(SBvsDelayWin, self).__init__(parent)
         self.setGeometry(300, 300, 1000, 500)
         self.setWindowFlags(Qt.Window)
-
         self.par = parent
         self.mainlayout = QHBoxLayout()
-
         self.init_var()
         self.init_graphlayout()
         self.init_commandlayout()
@@ -54,11 +52,12 @@ class SBvsDelayWin(QDialog):
                 popt[1] = -1 * popt[1]
                 popt[2] = popt[2] + np.pi
 
-            cts.contrast[i, 1] = popt[1] / popt[0]
+            # cts.contrast[i, 1] = popt[1] / popt[0]
             self.a0.append(popt[0])
             self.a1.append(popt[1])
             self.phi.append(popt[2])
 
+        print(self.a1)
         self.parent().window().updateglobvar_fn()
 
     def init_graphlayout(self) -> None:
@@ -126,10 +125,10 @@ class SBvsDelayWin(QDialog):
         self.contrastTable.setItem(0, 1, QTableWidgetItem("cos fit contrast"))
         self.contrastTable.setItem(0, 2, QTableWidgetItem("FT contrast"))
 
-        for i in range(cts.bandsnb):
-            self.contrastTable.setItem(i + 1, 0, QTableWidgetItem(str(cts.contrast[i, 0])))
-            self.contrastTable.setItem(i + 1, 1, QTableWidgetItem("{:.3f}".format(cts.contrast[i, 1])))
-            self.contrastTable.setItem(i + 1, 2, QTableWidgetItem("{:.3f}".format(cts.contrast[i, 2])))
+        # for i in range(cts.bandsnb):
+        #     self.contrastTable.setItem(i + 1, 0, QTableWidgetItem(str(cts.contrast[i, 0])))
+        #     self.contrastTable.setItem(i + 1, 1, QTableWidgetItem("{:.3f}".format(cts.contrast[i, 1])))
+        #     self.contrastTable.setItem(i + 1, 2, QTableWidgetItem("{:.3f}".format(cts.contrast[i, 2])))
 
         w = 0
         for i in range(self.contrastTable.columnCount()):

@@ -186,57 +186,51 @@ class Rabbit_functions_mixin:
             dshape = rab.shape
             cts.stepsnb = dshape[0]
 
+            Vrep = cts.vrep  # in kV
+            elow = 0.01 + cts.cur_Ip
+            ehigh = 3.078 * Vrep + cts.cur_Ip
+
+            self.elow_le.setText("{:.2f}".format(elow))
+            self.ehigh_le.setText("{:.2f}".format(ehigh))
+            self.update_envect_fn()
+
             cts.delay_vect = np.linspace(0, cts.scanstep_nm * 2 / cts.C * cts.stepsnb * 1e-9, cts.stepsnb,
                                          endpoint=False)
-            Vrep = cts.vrep  # in kV
+            nbsteps_E = (cts.ehigh - cts.elow) / cts.dE + 1
+            cts.energy_vect = np.linspace(cts.elow, cts.ehigh, nbsteps_E)
+
 
             if self.need_calib_cb.isChecked():
-                if cts.VMI == 'Lionel':
-                    # ehigh = 3.078 * Vrep + cts.cur_Ip
-                    r = np.linspace(1, 256, 256)  # pixel vector
-                    # calib from Guillaume, I added the +Ip and put Vrep as a parameter
-                    a = 2.239E-5*14.7872/7.6606 * Vrep
-                    b = 7.665E-9*14.7872/7.6606 * Vrep
-                    deriv = 2*a + 3*b*r # see remark below
-
-                elif cts.VMI == 'SE1':
-                    Rmax = cts.Rmax
-                    dr = cts.dr
-                    r = np.linspace(1, Rmax, int(Rmax/dr))
-                    a = 2.016e-5/2.6 * Vrep  # extracted from Ar-Ar data 2020-07-29
-                    b = 4.541e-9/2.6 * Vrep  # extracted from Ar-Ar data 2020-07-29
-                    deriv = 2*a*r + 3*b*r**2
-
+                r = np.linspace(1, 256, 256) # pixel vector
+                # calib from Guillaume, I added the +Ip and put Vrep as a parameter
+                a = 2.239E-5*14.7872/7.6606 * Vrep
+                b = 7.665E-9*14.7872/7.6606 * Vrep
                 EeV = a*r**2 + b*r**3 + cts.cur_Ip
-
-                cts.elow = cts.dE + cts.cur_Ip
-                cts.ehigh = EeV[-1]
-                nbsteps_E = (cts.ehigh - cts.elow) / cts.dE + 1
-                cts.energy_vect = np.linspace(cts.elow, cts.ehigh, nbsteps_E)
-
-                self.elow_le.setText("{:.2f}".format(cts.elow))
-                self.ehigh_le.setText("{:.2f}".format(cts.ehigh))
-                self.update_envect_fn()
+                Ederiv_over_r = 2*a + 3*b*r # see remark below
 
                 # from now on I mimic the function af.jacobian_transform except that the jacobian transform
-                # is slightly different in Lionel's case: as a 1/r correction is already performed during the Abel
-                # inversion process, we have to multiply by r*dr/dE (ie divide by 1/r * dE/dr)
+                # is slightly different: as a 1/r correction is already performed during the Abel inversion
+                # process, we have to multiply by r*dr/dE (ie divide by 1/r * dE/dr)
                 countsnew = np.zeros((dshape[0], dshape[1]))
                 for i in range(dshape[0]):
-                    countsnew[i, :] = rab[i, :]/deriv
+                    countsnew[i, :] = rab[i, :]/Ederiv_over_r
                 f = scipy.interpolate.interp1d(EeV, countsnew)
                 cts.rabbit_mat = f(cts.energy_vect)
             else:
                 cts.rabbit_mat = rab
 
 
+
             # Updating the graph
             # self.rab_widget.refreshplot_fn(cts.energy_vect, cts.delay_vect, cts.rabbit_mat)
+
             self.rab_widget.colorauto_cb.setEnabled(True)
+
             self.rab_widget.logscale_cb.setEnabled(True)
 
             self.window().statusBar().showMessage("Data loaded successfully")
             self.dataloaded = True
+
             self.importXUV_btn.setEnabled(True)
 
             # Updating the "Signal Treatment" Groupbox
@@ -247,10 +241,14 @@ class Rabbit_functions_mixin:
             self.showbands_cb.setChecked(True)
             self.color = "black"
 
+
             # finding the oscillation frequency using rainbow rabbit analysis
             cts.FT_padding = True
+
             cts.rabbitmode = 'rainbow'
+
             self.rabbit_fn()
+
             # self.rabbit_done = False # so I don't display amp and phase
             self.refreshplot()
 
@@ -262,6 +260,7 @@ class Rabbit_functions_mixin:
             self.int_rab_cb.setEnabled(True)
 
             self.window().updateglobvar_fn()
+
 
     def smoothrab_lr(self):
         ''' "smooth RABBIT" button listener'''
@@ -332,6 +331,7 @@ class Rabbit_functions_mixin:
         self.energy = []
         data = []
 
+
         hnu = cts.HEV * cts.cur_nu
         self.SBi = cts.first_harm + 1
 
@@ -339,6 +339,7 @@ class Rabbit_functions_mixin:
             signal = cts.rabbitxuvsub_mat
         else:
             signal = cts.rabbit_mat
+            print('shape of signal = '+str(np.shape(signal)))
 
         jx = []
         # if we don't select bands (rainbow mode), we analyse the whole spectrogram
@@ -386,12 +387,18 @@ class Rabbit_functions_mixin:
 
         elif cts.rabbitmode == 'rainbow':
             self.peak = []
+            # print('OK rabbit_fn 5')
 
             for ji, jf in jx[:]:
                 for x in range(ji,jf+1):
+                    # print('OK rabbit_fn 5 ji ='+ str(ji) + ' x ='+str(x))
+
                     x_data = signal[:, x]
+                    print(np.shape(x_data))
+                    # print('OK rabbit_fn 6')
                     # f2om, peak, peak_phase, phase_err = af.find_2w(x_data, cts.scanstep_fs*1e-15)
                     self.freqnorm, ampl, ang =  af.FFT(x_data, cts.scanstep_fs*1e-15)
+                    # print('OK rabbit_fn 7')
 
                     data.append(x_data)
                     self.ang.append(ang)
@@ -401,14 +408,16 @@ class Rabbit_functions_mixin:
                     # self.peak_phase.append(peak_phase)
                     # self.phase_err.append(phase_err)
                     # self.fpeak.append(f2om)
-
+                # print('end of for loop 1 OK')
+            # print('end of for loop 2 OK')
             self.energy = np.array(self.energy)
+
 
 
         else:
             print('Incorrect cts.rabbitmode value')
             raise ValueError
-
+        print('end if Rainbow')
         cts.FT_ampl = np.array(self.ampl)
         cts.FT_phase = np.array(self.ang)
         # cts.fpeak = np.array(self.fpeak)
@@ -437,6 +446,7 @@ class Rabbit_functions_mixin:
             print('cts.fpeak_main', cts.fpeak_main)
             self.fpeak_index = fpeak_main_i
             self.set_2w_le.setText(str(self.fpeak_index))
+            print('0K Rabbit_fn 8')
 
         # see Q:\LIDyL\Atto\ATTOLAB\SE1\Analyse_RABBIT\DFT_Phase_in_Rabbit\DFT_Phase_in_Rabbit.pdf
         # works only if nu is determined with 0-padding, and for npad >= 2048 the correction is not
@@ -454,6 +464,8 @@ class Rabbit_functions_mixin:
                 cts.FT_phase[:, j] = cts.FT_phase[:, j] - Extraphase_DP[j]
             # cts.FT_phase = af.wrap2pmpi(np.unwrap(cts.FT_phase, axis=1))
 
+        print('0K Rabbit_fn 9 if phase_corr')
+
 
 
         cts.fpeak = cts.freqnorm[self.fpeak_index]
@@ -463,15 +475,20 @@ class Rabbit_functions_mixin:
 
         # calculating SNR and phase error based on SNR ("Thierry's" technique)
         l = cts.FT_ampl.shape[1]
-
+        # print(" l ")
+        # print(l)
         # for steps 75nm
         # cts.SNR = cts.FT_ampl[:, self.fpeak_index]/\
         #           np.sqrt((cts.FT_ampl[:,200:600]**2).mean()*400)
         # for steps 25nm or similar
         cts.SNR = cts.FT_ampl[:, self.fpeak_index] / \
                   np.sqrt((cts.FT_ampl[:, l//2:] ** 2).mean() * l)
-
+        # print("shape S")
+        # print(np.shape(cts.SNR))
+        # print("shape cts.FT_ampl[:, self.fpeak_index] ")
+        # print(np.shape(cts.FT_ampl[:, self.fpeak_index] ))
         cts.phase_err = (0.03421*2048+19.26)/(2048+57.47)/cts.SNR
+        print('0K Rabbit_fn 10 SNR')
 
         fit_ampl = []
         fit_phase = []

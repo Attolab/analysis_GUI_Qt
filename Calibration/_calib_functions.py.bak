@@ -5,7 +5,6 @@ from matplotlib.ticker import FormatStrFormatter
 
 import traceback, sys
 
-import scipy.interpolate
 from scipy import optimize as opt
 import numpy as np
 
@@ -19,18 +18,14 @@ class calib_functions_mixin:
         if self.dataloaded:
             self.clear_lr()
 
-
-        file = QFileDialog.getOpenFileName(self, 'Load data')
-        fname = file[0]
+        TOFfile = QFileDialog.getOpenFileName(self, 'Load data')
+        fname = TOFfile[0]
         if (fname):
-            if self.spectro == 'TOF':
-                self.counts = self.import_tof(fname)
 
-                if cts.minus_sign:
-                    self.counts[:, 1] = (-1) * self.counts[:, 1]
+            self.counts = self.import_tof(fname)
 
-            elif self.spectro == 'VMI':
-                self.counts = np.loadtxt(fname)
+            if cts.minus_sign:
+                self.counts[:, 1] = (-1) * self.counts[:, 1]
 
             self.thxmin = 0
             self.thy = 0
@@ -41,25 +36,24 @@ class calib_functions_mixin:
             self.tof_ax.ticklabel_format(axis='x',style='sci',scilimits=(-1,1))
             self.tof_fc.draw()
 
+            self.rmbgnd_btn.setEnabled(True)
+            self.findpeaks_btn.setEnabled(True)
+            self.rmpeaks_btn.setEnabled(False)
+            self.addpeak_cb.setEnabled(False)
+            self.showexppeaks_cb.setEnabled(True)
+            self.setth_cb.setEnabled(True)
+            self.Y_rb.setEnabled(True)
+            self.xmin_rb.setEnabled(True)
+            self.xmax_rb.setEnabled(True)
+            self.clear_btn.setEnabled(True)
+            self.minus_sign_cb.setEnabled(True)
+            self.withsb_cb.setEnabled(True)
 
-        self.rmbgnd_btn.setEnabled(True)
-        self.findpeaks_btn.setEnabled(True)
-        self.rmpeaks_btn.setEnabled(False)
-        self.addpeak_cb.setEnabled(False)
-        self.showexppeaks_cb.setEnabled(True)
-        self.setth_cb.setEnabled(True)
-        self.Y_rb.setEnabled(True)
-        self.xmin_rb.setEnabled(True)
-        self.xmax_rb.setEnabled(True)
-        self.clear_btn.setEnabled(True)
-        self.minus_sign_cb.setEnabled(True)
-        self.withsb_cb.setEnabled(True)
-
-        self.dataloaded = True
-        self.threshxminBool = False
-        self.threshxmaxBool = False
-        self.threshyBool = False
-        self.peaksfound = False
+            self.dataloaded = True
+            self.threshxminBool = False
+            self.threshxmaxBool = False
+            self.threshyBool = False
+            self.peaksfound = False
 
     def minus_sign_lr(self):
         if self.minus_sign_cb.isChecked():
@@ -176,68 +170,42 @@ class calib_functions_mixin:
     ''' "TOF to energy" button listener '''
     def tof2en_lr(self):
         if self.calibloaded:
-            if self.spectro == 'TOF':
-                self.p_opt = [0, 0, 0]
-                self.p_opt[0] = cts.afit
-                self.p_opt[1] = cts.t0fit
-                self.p_opt[2] = cts.cfit
-                self.calibloaded = False
+            self.p_opt = [0, 0, 0]
+            self.p_opt[0] = cts.afit
+            self.p_opt[1] = cts.t0fit
+            self.p_opt[2] = cts.cfit
+            self.calibloaded = False
         else:
 
             qqi = float(self.firstharm_le.text())
+            tofHHG = self.maximaIndices
             if self.withsb_bool:
-                qq = np.arange(qqi, qqi + len(self.maximaIndices), 1)
+                qq = np.arange(qqi, qqi + len(tofHHG), 1)
             else:
-                qq = np.arange(qqi, qqi + 2 * len(self.maximaIndices), 2)
+                qq = np.arange(qqi, qqi + 2 * len(tofHHG), 2)
+            qq = qq[::-1]
 
-            if self.spectro == 'TOF':
-                qq = qq[::-1]
-                guess = np.array([self.aguess, self.t0guess, self.cguess])
-                func = af.tof2EeV
-            elif self.spectro == 'VMI':
-                guess = np.array([cts.Aguess, cts.Bguess])
-                func = af.R2EeV
-
-            self.p_opt, self.pcov = opt.curve_fit(func, self.maximaIndices, qq, guess)
-            fit = np.linspace(self.maximaIndices[0], self.maximaIndices[-1], 100)
-            self.fit_ax.plot(fit, func(fit, *self.p_opt), label='Fit')
-            self.fit_ax.plot(fit, func(fit, *guess), label='Guess')
-            self.fit_ax.plot(self.maximaIndices, qq, 'ys', label='TOF(peaks)')
-
-        if self.spectro == 'TOF':
-            cts.afit = self.p_opt[0]
-            cts.t0fit = self.p_opt[1]
-            cts.cfit = self.p_opt[2]
-        elif self.spectro == 'VMI':
-            cts.Afit = self.p_opt[0]
-            cts.Bfit = self.p_opt[1]
-
+            self.p_opt, self.pcov = opt.curve_fit(af.tof2EeV, tofHHG, qq,
+                                                  np.array([self.aguess, self.t0guess, self.cguess]))
+            toffit = np.linspace(tofHHG[0], tofHHG[-1], 100)
+            self.fit_ax.plot(toffit, af.tof2EeV(toffit, self.p_opt[0], self.p_opt[1], self.p_opt[2]), label='Fit')
+            self.fit_ax.plot(toffit, af.tof2EeV(toffit, self.aguess, self.t0guess, self.cguess), label='Guess')
+            self.fit_ax.plot(tofHHG, qq, 'ys', label='TOF(peaks)')
+        cts.afit = self.p_opt[0]
+        cts.t0fit = self.p_opt[1]
+        cts.cfit = self.p_opt[2]
         self.exportcalib_btn.setEnabled(True)
+
         self.calibBool = True
-
-        xaxis = self.counts[:, 0]
-        signal = self.counts[:, 1]
-        if self.spectro == 'TOF':
-            x2 = xaxis[::-1]
-            self.Eevlin, self.signal = af.jacobian_transform(x2, signal)
-
-        elif self.spectro == 'VMI':
-            cts.elow = cts.cur_Ip + cts.dE
-            EeV = cts.Afit * xaxis**2 + cts.Bfit * xaxis**3 + cts.cur_Ip
-            cts.ehigh = EeV[-1]
-            print(cts.ehigh)
-
-            nbsteps_E = (cts.ehigh - cts.elow) / cts.dE + 1
-            self.Eevlin = np.linspace(cts.elow, cts.ehigh, nbsteps_E)
-
-            Ederiv = 2*cts.Afit*xaxis + 3*cts.Bfit*xaxis**2
-            countsj = signal/Ederiv
-            f = scipy.interpolate.interp1d(EeV, countsj)
-            self.signal = f(self.Eevlin)
 
         self.update_fitpar_fn()
         self.update_envect_fn()
         self.window().updateglobvar_fn()
+
+        tof = self.counts[:, 0]
+        tof2 = tof[::-1]
+        signal = self.counts[:, 1]
+        self.Eevlin, self.signal = af.jacobian_transform(tof2, signal)
 
         self.en_ax.set_xlabel("Energy (eV)")
         self.en_ax.set_ylabel("counts (arb. units)")
@@ -246,8 +214,7 @@ class calib_functions_mixin:
 
         self.exportXUV_btn.setEnabled(True)
 
-        ### just for tests
-        """int = np.trapz(self.signal, self.Eevlin, axis=0)
+        int = np.trapz(self.signal, self.Eevlin, axis=0)
         tof_i = np.argmin(np.abs(tof - af.eeV2tof(cts.ehigh)))
         tof_f = np.argmin(np.abs(tof - af.eeV2tof(cts.elow)))
         print('tof limits:')
@@ -256,7 +223,7 @@ class calib_functions_mixin:
         ratio = int / int_tof
         print('int: ', int)
         print('ratio: ', ratio)
-        cts.signal_test = np.array(self.signal)"""
+        cts.signal_test = np.array(self.signal)
 
         self.fit_fc.draw()
         self.en_fc.draw()
