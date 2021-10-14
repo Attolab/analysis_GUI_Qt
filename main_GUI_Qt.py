@@ -1,22 +1,26 @@
-
-'''Develop commit test'''
 """The program has to be runned here"""
 
 import sys
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QWidget, QApplication, QTabWidget, QHBoxLayout, QMainWindow, QSplitter, QTableWidget
-from PyQt5.QtWidgets import QTableWidgetItem, QTableView, QDialog
+from PyQt5.QtWidgets import QWidget, QApplication, QTabWidget, QHBoxLayout, QMainWindow, QSplitter
+from PyQt5.QtWidgets import QTableWidgetItem, QTableView, QDialog, QTableWidget
 import PyQt5.QtWidgets as qtw
 import traceback
 import numpy as np
+import matplotlib
+
+# Ensure using PyQt5 backend
+matplotlib.use('QT5Agg')
 
 # homemade modules
 from Calibration import calib_win
 from Rabbit import Rabbit_win
+from VMI_analysis import Vmi_win
 import glob_var as cts
 
-'''The main object.'''
+
 class mainWin(QMainWindow):
+    '''The main object.'''
     def __init__(self) -> None:
         super(mainWin, self).__init__()
         self.setWindowTitle("Analysis Main")
@@ -54,12 +58,14 @@ class mainWin(QMainWindow):
 
         self.var_table.setUpdatesEnabled(True)
 
-        self.var_table.setColumnWidth(0, 50)
+
         self.var_table.setColumnCount(3)
+        self.var_table.setFixedWidth(195)
         cts.update_varlist()
         self.var_table.setRowCount(len(cts.varlist))
 
         self.updateglobvar_fn()
+
 
         # right side with the tabs
         self.tabs_widget = QWidget()
@@ -70,17 +76,19 @@ class mainWin(QMainWindow):
         self.main_panel = QTabWidget()
         self.calib_tab = calib_win.CalibWin(self)
         self.rabbit_tab = Rabbit_win.RabbitWin(self)
+        self.vmi_tab = Vmi_win.VmiWin(self)
 
         self.main_panel.addTab(self.calib_tab, "Energy calibration")
         self.main_panel.addTab(self.rabbit_tab, "RABBIT")
+        self.main_panel.addTab(self.vmi_tab, "VMI analysis")
 
         self.main_panel.currentChanged.connect(self.onTabChange)
 
         self.layout.addWidget(self.main_panel)
 
-    ''' This function updates the values of the variable displayed on the left of the window. The list of the variables 
-    is in the glob_var.py file'''
     def updateglobvar_fn(self) -> None:
+        ''' This function updates the values of the variables displayed on the left of the window. The list of the variables
+            is at the end of the "glob_var.py" file'''
         self.var_table.clear()
         self.var_table.setColumnCount(3)
         self.var_table.setRowCount(len(cts.varlist))
@@ -101,7 +109,7 @@ class mainWin(QMainWindow):
                 if varname == "Ip" or varname == "Vp" or varname == "elow" or varname == "ehigh" or varname == "dE":
                     self.var_table.setItem(i, 2, QTableWidgetItem("{:.2f}".format(var)))
                 elif varname == "L" or varname == "1st harm" or varname == "steps_nm" or varname == "steps_fs" \
-                        or varname == "stepsnb" or varname == "bandsnb":
+                        or varname == "stepsnb" or varname == "bandsnb" or varname == "bandsindices":
                     self.var_table.setItem(i, 2, QTableWidgetItem("{}".format(int(var))))
                 else:
                     self.var_table.setItem(i, 2, QTableWidgetItem("{:.2e}" .format(var)))
@@ -114,11 +122,14 @@ class mainWin(QMainWindow):
             if type == "string":
                 self.var_table.setItem(i, 2, QTableWidgetItem(var))
 
-        self.var_table.resizeColumnsToContents()
+        """self.var_table.resizeColumnsToContents()
         w = 0
         for i in range(self.var_table.columnCount()):
             w = w + self.var_table.columnWidth(i)
-        self.var_table.setFixedWidth(w+5)
+        self.var_table.setFixedWidth(w+5)"""
+        self.var_table.setColumnWidth(0, 80)
+        self.var_table.setColumnWidth(1, 50)
+        self.var_table.setColumnWidth(2, 60)
 
     def custom_type_fn(self, o) -> str:
         type = "other"
@@ -153,6 +164,7 @@ class mainWin(QMainWindow):
         self.rabbit_tab.elow_le.setText("{:.2f}".format(cts.elow))
         self.rabbit_tab.ehigh_le.setText("{:.2f}".format(cts.ehigh))
         self.rabbit_tab.dE_le.setText("{:.2f}".format(cts.dE))
+
 
 ''' The object that popups when double-clicking on a "environment" variable'''
 class varDialog(QDialog):
