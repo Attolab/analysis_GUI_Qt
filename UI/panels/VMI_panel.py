@@ -20,16 +20,22 @@ class VMIPanel(QWidget,Ui_VMI_panel):
     signal_VMI_panel_creation = Signal(object)
     signal_VMI_panel_destruction = Signal(object)
 
-    def __init__(self,parent=None,index = 0):
+    def __init__(self, parent=None, index=0, path=None):
         super(VMIPanel, self).__init__(parent)
+        #Load UI
         self.setupUi(self)  
-        self.openFile()
-        self.VMI_load_func()
-        self.connectVMISignal()
-        # self.setAttribute(Qt.WA_DeleteOnClose, True)
+        #Initialize parameters
         self.panel_index = index
+        self.path = path
+        #Open File
+        self.openFile()
+        #Load File
+        self.VMI_load_func()
+        #Connect signals
+        self.connectVMISignal()
 
-    def image_selection(self,input):
+
+    def image_selection(self, input=0):
         # print(input)
         # self.image_sel_changed.emit(input)
         self.image_index = int(input)        
@@ -37,24 +43,24 @@ class VMIPanel(QWidget,Ui_VMI_panel):
         self.updateGUI()
  
     def connectVMISignal(self):
-        # self.ImageList_table.cellDoubleClicked.connect(self.image_selection)        
         self.imageCentX_value.valueChanged.connect(self.updateGUI)        
         self.imageCentY_value.valueChanged.connect(self.updateGUI)        
         self.imageRot_value.valueChanged.connect(self.updateGUI)        
         self.imageSel_value.valueChanged.connect(self.image_selection)        
         self.apply_button.clicked.connect(self.updateGUI)
-        self.close_button.clicked.connect(self.closeEvent)
+        self.close_button.clicked.connect(self.closeEvent2)
+        self.destroyed.connect(self.closeEvent2)
 
     def updateGUI(self): 
         self.readFile(self.image_index)        
         self.image.setImage(self.im)  # set image to display, used only for tests
-        # self._VMI_panel.VMI_axis_layout.setImage(self.im)
     def meanCenter(self):                
                 self.imageCentX_value.setValue((self.im.mean(axis = 0)*np.arange(self.im.shape[0])).sum()/self.im.mean(axis = 0).sum())
                 self.imageCentY_value.setValue((self.im.mean(axis = 1)*np.arange(self.im.shape[1])).sum()/self.im.mean(axis = 1).sum())                
     def openFile(self):
-        self.path = str(QFileDialog.getOpenFileName(self, 'Import image','Q:\LIDyL\Atto\ATTOLAB\SE1\SlowRABBIT')[0])        
-        self.path_object = pathlib.Path(self.path)
+        if self.path is None:
+            self.path = str(QFileDialog.getOpenFileName(self, 'Import image','Q:\LIDyL\Atto\ATTOLAB\SE1\SlowRABBIT')[0])        
+        self.path_object = pathlib.Path(self.path)             
         try:
             with h5py.File(self.path, 'r') as file:                     
                 self.scan = '000'  # vérifier dans hdfview
@@ -66,7 +72,7 @@ class VMIPanel(QWidget,Ui_VMI_panel):
         except Exception:
             print(traceback.format_exception(*sys.exc_info()))   
         self.signal_VMI_panel_creation.emit(['VMI',self.path])
-    def readFile(self, index = 0):
+    def readFile(self, index=0):
         try:
             with h5py.File(self.path, 'r') as file:                     
                 self.raw_datas = file['Raw_datas']
@@ -103,10 +109,14 @@ class VMIPanel(QWidget,Ui_VMI_panel):
                         [255, 255, 0, 255], [255, 0, 0, 255], [255, 255, 255, 255]],
                         dtype=np.ubyte)
         return pg.ColorMap(pos, color)  
-    def closeEvent(self):
+    def closeEvent2(self, index):
         self.signal_VMI_panel_destruction.emit(self.panel_index)
-        print(f'VMI panel {self.panel_index} is now closed')                  
-        self.close()
+        print(f'Close event: VMI panel {self.panel_index} is now closed')  
+                
+
+
+        # self.close()
+
 
 def main():
 
