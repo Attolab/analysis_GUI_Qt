@@ -40,6 +40,7 @@ class MainPanel(QMainWindow,Ui_MainWindow):
         self._dock_tableSel.setWidget(self._tableSel_panel)
         self.addDockWidget(Qt.LeftDockWidgetArea,self._dock_tableSel)  
         self._tableSel_panel.tableSel_ComboBox_changed.connect(self.table_selChange)
+        self._tableSel_panel.tableSel_doubleclicked.connect(self.table_sel_doubleclicked)
 
 
 
@@ -50,6 +51,8 @@ class MainPanel(QMainWindow,Ui_MainWindow):
             self.isPanelopen.append(True)
             self.numberofPanel += 1        
 
+
+    # def addDockWidget(self, index=0, path=None)
     def addVMIWidget(self, index=0, path=None):
         # VMI panel
         self._VMI_panel = VMIPanel(index=self.numberofPanel, path=path)
@@ -58,7 +61,7 @@ class MainPanel(QMainWindow,Ui_MainWindow):
         # self._VMI_panel.signal_VMI_panel_destruction.connect(self.closeEventVMI)        
         # Create Dock to store panel
         # if self.isPanelopen[index] == False:
-        self._docks_VMI.append(DataPanel(panel_type='VMI', index=index, status=True))
+        self._docks_VMI.append(DataPanel(f'VMI_{index}', panel_type='VMI', index=index, status=True))
             # self._docks_VMI[index] = QDockWidget(f'VMI_{index}',self)
         # else:
         # self._docks_VMI.append(QDockWidget(f'VMI_{index}',self))
@@ -74,23 +77,26 @@ class MainPanel(QMainWindow,Ui_MainWindow):
 
 
     def table_selChange(self, index, row):        
-        print(f'Panel is changed to {index}')
         if index == 0:
-            print(f'Opening Panel')            
-            self.addVMIWidget(index=row, path=self._tableSel_panel.tableWidget.item(index,3).text())
+            print(f'Opening Panel {row}')  
+            self._docks_VMI[row].show()
+            self.isPanelopen[row] = True
+                # self.addVMIWidget(index=row, path=self._tableSel_panel.tableWidget.item(index,3).text())
         elif index == 1:
-            print(f'Closing Panel')
-            self._docks_VMI[row].close()
+            print(f'Closing Panel {row}')
+            # self._docks_VMI[row].close()
+            self._docks_VMI[row].hide()
             self.isPanelopen[row] = False
         elif index == 2:
-            print(f'Deleting Panel')
+            print(f'Deleting Panel {row}')
             self._docks_VMI[row].close()
             self._docks_VMI.pop(row)
             self._tableSel_panel.tableWidget.removeRow(row)
             self.isPanelopen.pop(row)
             self.numberofPanel -= 1
-
-            a = 1
+    
+    def table_sel_doubleclicked(self,object):
+        print(object)
 
 
     def closeEventVMI(self, index):        

@@ -57,31 +57,48 @@ class VMIPanel(QWidget,Ui_VMI_panel):
     def meanCenter(self):                
                 self.imageCentX_value.setValue((self.im.mean(axis = 0)*np.arange(self.im.shape[0])).sum()/self.im.mean(axis = 0).sum())
                 self.imageCentY_value.setValue((self.im.mean(axis = 1)*np.arange(self.im.shape[1])).sum()/self.im.mean(axis = 1).sum())                
-    def openFile(self):
+    # def read_h5file(self):
+    #     with h5py.File(self.path, 'r') as file:                          
+    #         self.raw_datas = file['Raw_datas']            
+
+    # def read_npyfile(self):
+    #     with open(self.path,'r') as file:
+    #         np.load(file)
+
+    def openFile(self):            
+        
         if self.path is None:
-            self.path = str(QFileDialog.getOpenFileName(self, 'Import image','Q:\LIDyL\Atto\ATTOLAB\SE1\SlowRABBIT')[0])        
+            # self.path = str(QFileDialog.getOpenFileName(self, 'Import image','Q:\LIDyL\Atto\ATTOLAB\SE1\SlowRABBIT')[0])    
+            self.path = str(QFileDialog.getOpenFileName(self, 'Import image','D:\\Work\\Saclay\\Git\\analysis_GUI_Qt')[0])        
         self.path_object = pathlib.Path(self.path)             
         try:
-            with h5py.File(self.path, 'r') as file:                     
+            h5file = True
+            if h5file:
                 self.scan = '000'  # vérifier dans hdfview
-                self.path2 = ''.join(['Scan',self.scan,'/Detector000/Data2D/Ch000/Data'])     
-                self.raw_datas = file['Raw_datas']
-                self.image_number = self.raw_datas[self.path2].shape[0]  
-                self.imageCentX_value.setMaximum(self.raw_datas[self.path2].shape[1])
-                self.imageCentY_value.setMaximum(self.raw_datas[self.path2].shape[2])                
+                self.path2 = ''.join(['Scan',self.scan,'/Detector000/Data2D/Ch000/Data'])
+                with h5py.File(self.path, 'r') as file:                          
+                    self.raw_datas = file['Raw_datas']   
+                    self.image_number = self.raw_datas[self.path2].shape[0]  
+                    self.imageCentX_value.setMaximum(self.raw_datas[self.path2].shape[1])
+                    self.imageCentY_value.setMaximum(self.raw_datas[self.path2].shape[2])    
+                # self.open_h5file()
+            # self.open_npyfile()           
         except Exception:
             print(traceback.format_exception(*sys.exc_info()))   
         self.signal_VMI_panel_creation.emit(['VMI',self.path])
+
     def readFile(self, index=0):
         try:
-            with h5py.File(self.path, 'r') as file:                     
-                self.raw_datas = file['Raw_datas']
+            with h5py.File(self.path, 'r') as file:                          
+                self.raw_datas = file['Raw_datas']     
                 self.im = np.asarray(self.raw_datas[self.path2][index]).T
                 if self.autoCenter_checkBox.isChecked:
                     self.meanCenter()                    
                 self.im = rotate(self.im,self.imageRot_value.value(), resize=False,center= [self.imageCentX_value.value(),self.imageCentY_value.value()])                
         except Exception:
             print(traceback.format_exception(*sys.exc_info())) 
+
+
     def VMI_load_func(self):
         self.image_index = 0
         self.readFile()

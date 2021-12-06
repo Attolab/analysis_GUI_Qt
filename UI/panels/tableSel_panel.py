@@ -9,15 +9,11 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
 from PySide6.QtWidgets import (QApplication, QComboBox, QPushButton, QSizePolicy, QToolButton,
     QVBoxLayout, QWidget,QTableWidgetItem,QFileDialog,QDockWidget,QMainWindow,QHeaderView)
 from .ui.tableSel_panel_ui import Ui_tableSel_panel
-import pyqtgraph as pg
-from skimage.transform import rotate
-import sys, traceback
-import h5py
-import numpy as np
-
 
 class TableSelPanel(QWidget,Ui_tableSel_panel):
     tableSel_ComboBox_changed = Signal(int,int)
+    tableSel_doubleclicked = Signal(object)
+
     # tableSel_ComboBox_changed = Signal(object)
 
     def __init__(self,parent=None):
@@ -26,7 +22,9 @@ class TableSelPanel(QWidget,Ui_tableSel_panel):
 
 
     def comboBox_change_fn(self,index,row):
-        self.tableSel_ComboBox_changed.emit(index,row)        
+        self.tableSel_ComboBox_changed.emit(index,row)     
+    def tablesel_doubleclicked_fn(self,object):
+        self.tableSel_doubleclicked.emit(object)
 
     # def tablewidget_change(self,row,col):
     #     self.tablewidget_change.emit(row,col)        
@@ -57,9 +55,11 @@ class TableSelPanel(QWidget,Ui_tableSel_panel):
         # self.tableWidget.cellChanged.connect(self.tablewidget_change)
         # Detect if dropbox value is changed
         self.tableWidget.cellWidget(index,1).currentIndexChanged.connect( lambda i, a=index: self.comboBox_change_fn(i, a) )
-
-
+        self.tableWidget.doubleClicked.connect(self.tablesel_doubleclicked_fn )
+        # self.tableWidget.mouseDoubleClickEvent.connect(self.tablesel_doubleclicked_fn)    
         self.check_columnwidth()
+
+
     def check_columnwidth(self):
         header = self.tableWidget.horizontalHeader()    
         # for i in ran   
@@ -80,14 +80,6 @@ class TableSelPanel(QWidget,Ui_tableSel_panel):
         # self.tableWidget.CellWidget(index,1, status_item) 
 
 
-        # # self.image.setImage(self.im, autoLevels=True)
-        # for i in range(imagenumber):
-        #     index = QTableWidgetItem(f'{i}')
-        #     parameter = QTableWidgetItem(f'{i}')
-        #     index.setFlags( Qt.ItemIsSelectable |  Qt.ItemIsEnabled )
-        #     parameter.setFlags( Qt.ItemIsSelectable |  Qt.ItemIsEnabled )
-
-# Qt.dockwi
 def main():
     import sys
     app = QApplication([])
