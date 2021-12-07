@@ -1,0 +1,270 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="enabled">
+   <bool>true</bool>
+  </property>
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>460</width>
+    <height>408</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <widget class="QComboBox" name="comboBox">
+   <property name="geometry">
+    <rect>
+     <x>70</x>
+     <y>330</y>
+     <width>91</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <item>
+    <property name="text">
+     <string>Fixed center</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>Mean center</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>Simplex center</string>
+    </property>
+   </item>
+  </widget>
+  <widget class="QWidget" name="gridLayoutWidget">
+   <property name="geometry">
+    <rect>
+     <x>30</x>
+     <y>80</y>
+     <width>338</width>
+     <height>210</height>
+    </rect>
+   </property>
+   <layout class="QGridLayout" name="gridLayout">
+    <item row="1" column="0" colspan="2">
+     <widget class="QCheckBox" name="checkBox_3">
+      <property name="text">
+       <string>Angular distribution</string>
+      </property>
+     </widget>
+    </item>
+    <item row="5" column="0" colspan="4">
+     <widget class="QProgressBar" name="progressBar">
+      <property name="value">
+       <number>24</number>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="0">
+     <spacer name="horizontalSpacer">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+      <property name="sizeHint" stdset="0">
+       <size>
+        <width>40</width>
+        <height>20</height>
+       </size>
+      </property>
+     </spacer>
+    </item>
+    <item row="7" column="0" colspan="2">
+     <widget class="QPushButton" name="pushButton_2">
+      <property name="text">
+       <string>Autoupdate</string>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="3">
+     <spacer name="horizontalSpacer_3">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+      <property name="sizeHint" stdset="0">
+       <size>
+        <width>68</width>
+        <height>17</height>
+       </size>
+      </property>
+     </spacer>
+    </item>
+    <item row="1" column="2" colspan="2">
+     <widget class="QCheckBox" name="checkBox_2">
+      <property name="text">
+       <string>Radial distribution</string>
+      </property>
+     </widget>
+    </item>
+    <item row="7" column="2" colspan="2">
+     <widget class="QPushButton" name="pushButton">
+      <property name="text">
+       <string>Try me!</string>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="1" colspan="2">
+     <layout class="QVBoxLayout" name="verticalLayout">
+      <item>
+       <widget class="QLabel" name="label_8">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="layoutDirection">
+         <enum>Qt::LeftToRight</enum>
+        </property>
+        <property name="text">
+         <string>Binning</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout">
+        <item>
+         <widget class="QLabel" name="label_5">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="text">
+           <string>Image</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_6">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="text">
+           <string>Radial</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_7">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="text">
+           <string>Angular</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_2">
+        <item>
+         <widget class="QLabel" name="label_9">
+          <property name="text">
+           <string>1</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_10">
+          <property name="text">
+           <string>1</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_11">
+          <property name="text">
+           <string>1</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </item>
+    <item row="2" column="0" colspan="2">
+     <widget class="QCheckBox" name="checkBox_5">
+      <property name="text">
+       <string>Plot image</string>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="2">
+     <widget class="QCheckBox" name="checkBox_4">
+      <property name="text">
+       <string>Abel inversion</string>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="3">
+     <widget class="QComboBox" name="comboBox_2">
+      <item>
+       <property name="text">
+        <string>Abel Davis</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Basex</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Dasch</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Direct</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Hansenlaw</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Linbasex</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Onion peeling</string>
+       </property>
+      </item>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

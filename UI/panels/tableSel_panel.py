@@ -20,9 +20,12 @@ class TableSelPanel(QWidget,Ui_tableSel_panel):
         super(TableSelPanel, self).__init__(parent)
         self.setupUi(self)  
 
-
     def comboBox_change_fn(self,index,row):
-        self.tableSel_ComboBox_changed.emit(index,row)     
+        self.tableWidget.cellWidget(row,1).setCurrentIndex(index)
+
+    def comboBox_detectchange_fn(self,index,row):
+        self.tableSel_ComboBox_changed.emit(index,row)   
+        self.updateTable(index,row)  
     def tablesel_doubleclicked_fn(self,object):
         self.tableSel_doubleclicked.emit(object)
 
@@ -39,6 +42,10 @@ class TableSelPanel(QWidget,Ui_tableSel_panel):
 
         status_item = QComboBox()
         status_item.addItems(["Open", "Close", "Delete"])
+        # status_item.setStyleSheet("QComboBox"
+        #                              "{"
+        #                              "background-color: lightgreen;"
+        #                              "}")
         # status_item.currentIndexChanged.connect(self.comboBox_change_fn)
         # status_item = QPushButton('Open')
 
@@ -49,13 +56,20 @@ class TableSelPanel(QWidget,Ui_tableSel_panel):
 
         self.tableWidget.setItem(index,0, type_item)
         self.tableWidget.setCellWidget(index,1, status_item) 
+        self.tableWidget.cellWidget(index,1).setStyleSheet("QComboBox"
+                                     "{background-color: lightgreen;}")
+
         self.tableWidget.setItem(index,2, imagenumber_item) 
         self.tableWidget.setItem(index,3, path_item)      
 
         # self.tableWidget.cellChanged.connect(self.tablewidget_change)
         # Detect if dropbox value is changed
-        self.tableWidget.cellWidget(index,1).currentIndexChanged.connect( lambda i, a=index: self.comboBox_change_fn(i, a) )
+        self.tableWidget.cellWidget(index,1).currentIndexChanged.connect( lambda i, a=index: self.comboBox_detectchange_fn(i, a) )
+
+
+
         self.tableWidget.doubleClicked.connect(self.tablesel_doubleclicked_fn )
+        
         # self.tableWidget.mouseDoubleClickEvent.connect(self.tablesel_doubleclicked_fn)    
         self.check_columnwidth()
 
@@ -72,12 +86,13 @@ class TableSelPanel(QWidget,Ui_tableSel_panel):
         rowNumber = self.tableWidget.rowCount()      
         self.tableWidget.insertRow(rowNumber)
         return rowNumber
-    def updateTable(self,index):
-        self.tableWidget.cellWidget(index,1).setStyleSheet('QPushButton {background-color: red; color: black;}')
-        self.tableWidget.cellWidget(index,1).setCurrentIndex(1)
-        # self.tableWidget.cellWidget(index,1).setText('Closed')
-        print('table is updated')
-        # self.tableWidget.CellWidget(index,1, status_item) 
+    def updateTable(self,index,row):
+        if index == 0:
+            self.tableWidget.cellWidget(row,1).setStyleSheet("QComboBox"
+                                        "{background-color: lightgreen;}")            
+        elif index == 1:
+            self.tableWidget.cellWidget(row,1).setStyleSheet("QComboBox"
+                                "{background-color: #FF7276;}")            
 
 
 def main():

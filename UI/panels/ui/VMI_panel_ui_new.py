@@ -17,7 +17,7 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QAbstractItemView, QApplication, QCheckBox, QDoubleSpinBox, QHBoxLayout, QHeaderView,
     QLabel, QSizePolicy, QSpinBox, QTableWidget,
-    QTableWidgetItem, QVBoxLayout, QWidget,QPushButton)
+    QTableWidgetItem, QVBoxLayout, QWidget,QPushButton,QSpacerItem,QSizePolicy,QGridLayout)
 import pyqtgraph  as pg  
 from pyqtgraph import dockarea
 
@@ -28,16 +28,16 @@ class Ui_VMI_panel(object):
             VMI_panel.setObjectName(u"VMI_panel")
 
         self.central_widget = dockarea.DockArea()
-        self.dock_control = dockarea.Dock("", size=(150, 600))
-        self.dock_control.hideTitleBar()
+        self.control_dock = dockarea.Dock("", size=(150, 600))
+        # self.control_dock.hideTitleBar()
 
         self.controls_layout = pg.LayoutWidget()
         self.controls_layout_function()
 
 
-        self.dock_direct_image = dockarea.Dock("Direct Image", size=(600, 600))
-        self.central_widget.addDock(self.dock_control, 'left')
-        self.central_widget.addDock(self.dock_direct_image, 'right', self.dock_control)
+        self.direct_image_dock = dockarea.Dock("Direct Image", size=(600, 600))
+        self.central_widget.addDock(self.control_dock, 'left')
+        self.central_widget.addDock(self.direct_image_dock, 'right', self.control_dock)
 
 
     def controls_layout_function(self):
@@ -52,11 +52,15 @@ class Ui_VMI_panel(object):
         self.imageCentY_label = QLabel('CenterY')
         self.imageCentX_value = QDoubleSpinBox()
         self.imageCentY_value = QDoubleSpinBox()
-        self.autoCenter_checkBox = QCheckBox('AutoCenter')    
+        self.showAxis_checkBox = QCheckBox('ShowAxis') 
+        self.showAxis_checkBox.setChecked(True)
+        self.showCenter_checkBox = QCheckBox('ShowCenter')  
+        self.showCenter_checkBox.setChecked(True)
         self.imageRot_label = QLabel('Image rotation')
         self.imageRot_value = QDoubleSpinBox()      
         self.apply_button = QPushButton('Apply')
         self.close_button = QPushButton('Close')
+        self.toolbox_button = QPushButton('Toolbox')
 
         #Remove keyboard tracking from spin box
         self.imageRot_value.setKeyboardTracking(False)
@@ -70,27 +74,45 @@ class Ui_VMI_panel(object):
 
 
 
+        n = 0
+        self.controls_layout.addWidget(self.dataset_label, n, 0)
+        self.controls_layout.addWidget(self.dataset_value, n, 1)
+        n = n + 1        
+        self.controls_layout.addWidget(self.imageSel_label, n, 0)
+        self.controls_layout.addWidget(self.imageSel_value, n, 1)
+        n = n + 1        
+        self.controls_layout.addWidget(self.imageCentX_label, n, 0)
+        self.controls_layout.addWidget(self.imageCentX_value, n, 1)
+        n = n + 1                
+        self.controls_layout.addWidget(self.imageCentY_label, n, 0)
+        self.controls_layout.addWidget(self.imageCentY_value, n, 1)         
+        n = n + 1        
+        self.controls_layout.addWidget(self.showAxis_checkBox, n, 0)    
+        self.controls_layout.addWidget(self.showCenter_checkBox, n, 1)              
+        n = n + 1        
+        self.controls_layout.addWidget(self.imageRot_label, n, 0)
+        self.controls_layout.addWidget(self.imageRot_value, n, 1)
+        n = n + 1         
+        self.controls_layout.addWidget(self.toolbox_button, n, 0, 1, 2)                
+        n = n + 1        
+        self.coords_lb = QLabel("")  # gives x, y and value where the mouse is
+        self.controls_layout.addWidget(self.coords_lb, n, 0, 1, 2)                
+        n = n + 1        
+        # self.stat_lb = QLabel("")  # gives max and integrate of the image        
+        # self.controls_layout.addWidget(self.stat_lb, n, 1)                
+        # n = n + 1        
+        verticalSpacer = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding) 
+        self.controls_layout.layout.addItem(verticalSpacer,n,0,1,2)
+        n = n + 1
+        horizontalSpacer = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding) 
+        self.controls_layout.layout.addItem(horizontalSpacer,0,2,n,1)
+        # self.layout = QGridLayout()
+        self.control_dock.addWidget(self.controls_layout)
+        # self.control_dock.addWidget(verticalSpacer)
 
-        self.controls_layout.addWidget(self.dataset_label, 0, 0)
-        self.controls_layout.addWidget(self.dataset_value, 0, 1)        
-        self.controls_layout.addWidget(self.imageNumber_label, 1, 0)
-        self.controls_layout.addWidget(self.imageNumber_value, 1, 1)
-        self.controls_layout.addWidget(self.imageSel_label, 2, 0)
-        self.controls_layout.addWidget(self.imageSel_value, 2, 1)
-        self.controls_layout.addWidget(self.imageCentX_label, 3, 0)
-        self.controls_layout.addWidget(self.imageCentX_value, 3, 1)        
-        self.controls_layout.addWidget(self.imageCentY_label, 4, 0)
-        self.controls_layout.addWidget(self.imageCentY_value, 4, 1)         
-        self.controls_layout.addWidget(self.autoCenter_checkBox, 5, 0, 1, 2)         
-        self.controls_layout.addWidget(self.imageRot_label, 6, 0)
-        self.controls_layout.addWidget(self.imageRot_value, 6, 1) 
-        self.controls_layout.addWidget(self.apply_button, 7, 0, 1, 2)                
-        self.controls_layout.addWidget(self.close_button, 8, 0, 1, 2)                        
-        self.dock_control.addWidget(self.controls_layout)
 
-
-        # self.central_widget.addDock(self.dock_control, 'left')
-        # self.central_widget.addDock(self.dock_direct_image, 'right', self.dock_control)            
+        # self.central_widget.addDock(self.control_dock, 'left')
+        # self.central_widget.addDock(self.direct_image_dock, 'right', self.control_dock)            
         # VMI_panel.setEnabled(True)
         # VMI_panel.resize(813, 522)
         # sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
