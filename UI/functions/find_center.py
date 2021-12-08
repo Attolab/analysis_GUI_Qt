@@ -1,19 +1,28 @@
 import numpy as np
+from numpy.core.fromnumeric import argmax
 from numpy.ma.core import not_equal
 from pyqtgraph.graphicsItems.PlotDataItem import dataType
-
+import h5py
 
 class FindCenter():
-    def __init__(self, image=np.ones(shape =(10,64,64),dtype= np.float64)):
+    def __init__(self, image=np.ones(shape =(10,64,64),dtype= np.float64), rmin=0, rmax=64):
         self.image = image
-        
+        self.rmin = rmin
+        self.rmax = rmax
+
+    def mean_center(self):
+        [layers,rows,cols] = self.image.shape
+        center = np.zeros(shape=(2,layers),dtype = np.float64)
+        for index,im_temp in enumerate(self.image):
+            center[0,index] = np.sum(im_temp.mean(axis = 1)*np.arange(rows))/np.sum(im_temp.mean(axis = 1))
+            center[1,index] = np.sum(im_temp.mean(axis = 0)*np.arange(cols))/np.sum(im_temp.mean(axis = 0))
+        print(center)
     def simplex_center(self):
         [layers,rows,cols] = self.image.shape
-        self.rmax = np.max([rows,cols])
-
-        self.rmin = 0
         center = np.zeros(shape=(2,layers),dtype = np.float64)
-        prod=np.zeros(shape=(3,3),dtype = np.float64)
+        n = 2
+        N = 2*n+1
+        prod=np.zeros(shape=(N,N),dtype = np.float64)
         for index,im_temp in enumerate(self.image):
             center[0,index] = np.sum(im_temp.mean(axis = 1)*np.arange(rows))/np.sum(im_temp.mean(axis = 1))
             center[1,index] = np.sum(im_temp.mean(axis = 0)*np.arange(cols))/np.sum(im_temp.mean(axis = 0))
@@ -29,46 +38,83 @@ class FindCenter():
                     r_restriction = self.MakeMask(r_ind) # Make mask to select aoi
                     r_old=r_ind[1] # Restock last meaningful range
             # Grid of index (3*3)
-                    ind = center_ind + np.transpose(np.arange(-1,2))
-                    # Calculate residual of image on
-                    #(1,1) (1,2) (1,3)
-                    #(2,1) (2,2) (2,3)
-                    #(3,1) (3,2) (3,3)
-                    # where (2,2) is the last guess of the center
-                    prod[1,1]=self.MultiplyImages(im_temp,[ind[0,0], ind[0,1]],r_ind[1],r_restriction)
-                    prod[1,2]=self.MultiplyImages(im_temp,[ind[0,0], ind[1,1]],r_ind[1],r_restriction)
-                    prod[1,3]=self.MultiplyImages(im_temp,[ind[0,0], ind[2,1]],r_ind[1],r_restriction)
-                    prod[2,1]=self.MultiplyImages(im_temp,[ind[1,0], ind[0,1]],r_ind[1],r_restriction)
-                    prod[2,2]=self.MultiplyImages(im_temp,[ind[1,0], ind[1,1]],r_ind[1],r_restriction)
-                    prod[2,3]=self.MultiplyImages(im_temp,[ind[1,0], ind[2,1]],r_ind[1],r_restriction)
-                    prod[3,1]=self.MultiplyImages(im_temp,[ind[2,0], ind[0,1]],r_ind[1],r_restriction)
-                    prod[3,2]=self.MultiplyImages(im_temp,[ind[2,0], ind[1,1]],r_ind[1],r_restriction)
-                    prod[3,3]=self.MultiplyImages(im_temp,[ind[2,0], ind[2,1]],r_ind[1],r_restriction)
+
+                ind = center_ind + np.linspace(-n,n,N)[:,np.newaxis]
+                # Calculate residual of image on
+                #(1,1) (1,2) (1,3)
+                #(2,1) (2,2) (2,3)
+                #(3,1) (3,2) (3,3)
+                # where (2,2) is the last guess of the center
+                for i in range(n+1):
+                    for j in range(n+1):
+                        prod[i,j] = self.MultiplyImages(im_temp,[ind[i,0], ind[j,1]],r_ind[1],r_restriction)
+
+                # prod[0,0]=self.MultiplyImages(im_temp,[ind[0,0], ind[0,1]],r_ind[1],r_restriction)
+                # prod[0,1]=self.MultiplyImages(im_temp,[ind[0,0], ind[1,1]],r_ind[1],r_restriction)
+                # prod[0,2]=self.MultiplyImages(im_temp,[ind[0,0], ind[2,1]],r_ind[1],r_restriction)
+                # prod[1,0]=self.MultiplyImages(im_temp,[ind[1,0], ind[0,1]],r_ind[1],r_restriction)
+                # prod[1,1]=self.MultiplyImages(im_temp,[ind[1,0], ind[1,1]],r_ind[1],r_restriction)
+                # prod[1,2]=self.MultiplyImages(im_temp,[ind[1,0], ind[2,1]],r_ind[1],r_restriction)
+                # prod[2,0]=self.MultiplyImages(im_temp,[ind[2,0], ind[0,1]],r_ind[1],r_restriction)
+                # prod[2,1]=self.MultiplyImages(im_temp,[ind[2,0], ind[1,1]],r_ind[1],r_restriction)
+                # prod[2,2]=self.MultiplyImages(im_temp,[ind[2,0], ind[2,1]],r_ind[1],r_restriction)
+
+                #Pick maximum residual as new guess for the center
+                b=np.argmax(prod,axis = 1)
+                a=np.array([prod[i,b[i]] for i in range(N)])                
+                d=np.argmax(a)
+                i=d-2
+                j=b[d]-2
+                # Redefinition of center
+                center_ind = center_ind + [j,i]
+                center[:,index] =  ( center_ind + 1) 
+                # Break if meaningless, return center of mass
+                if np.min(center[:,index])<0 or center[0,index] > cols or center[1,index] > rows:
+                    print('Simplex center not found. Using geometric center instead.')
+                    center[0,index] = np.round(np.sum(im_temp.mean(axis = 1)*np.arange(rows))/np.sum(im_temp.mean(axis = 1)))
+                    center[1,index] = np.round(np.sum(im_temp.mean(axis = 0)*np.arange(cols))/np.sum(im_temp.mean(axis = 0)))
+                    i=0
+                    j=0
+                # Retrieve center
+                # center[:,index] =  ( center_ind - 1 ) 
+                # * reshape_factor(l);
+                #         center(k,:) =  ( center_ind(k,:)  ) * reshape_factor(l);
+        print(center)
+
     def MakeMask(self,r_ind):
-        x = np.meshgrid(np.arange(-r_ind[1],r_ind[1]**2))
+        x = np.meshgrid(np.arange(-r_ind[1],r_ind[1])**2)
         x = x + np.transpose(x) # grid of (x^2 + y^2)
         mask = np.logical_and(r_ind[0]**2 <= x,  x<= r_ind[1]**2)
         return mask
 
     def MultiplyImages(self,mat,center,r,r_restriction):
         # % Select rectangle
-        select_zone = [center - r , center + r]
+        select_zone = np.array([center - r , center + r],dtype=int)
         # % Apply rectangle on image
-        mat=mat[select_zone[0,1]:select_zone[1,1],select_zone[0,0]:select_zone[1,0]]
+        mat=mat[select_zone[0][1]:select_zone[1][1],select_zone[0][0]:select_zone[1][0]]
         # % Take reversed image
         mat_rot=np.rot90(mat,2)
         # % Calculate residual
-        res=sum(sum(mat*mat_rot*r_restriction))
+        res=np.sum(np.sum(mat*mat_rot*r_restriction))
         return res
 
 
 
 
 def main():
+   
+    path_file = 'Q:\LIDyL\Atto\ATTOLAB\SE1\SlowRABBIT\\'
+    filename = 'Dataset_20210423_003.h5'
+    scan = '000'  # vérifier dans hdfview        
+    with h5py.File(path_file + filename, 'r') as file:
+        path = ''.join(['Scan', scan,
+                        '/Detector000/Data2D/Ch000/'])  # Faire attention : parfois c'est Detector001 (voir dans hdfview)
+        raw_datas = file['Raw_datas']
+        data = np.array(raw_datas[path + 'Data'][0]) #Ne charger que l'image dont je vais déterminer le P0
+        F = FindCenter(data[np.newaxis,:,:],10,1000)
+        F.simplex_center()
+        F.mean_center()
 
-    F = FindCenter()
-    F.simplex_center()
-    
 
 if __name__=="__main__":
     main()        

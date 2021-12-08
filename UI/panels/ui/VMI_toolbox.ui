@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>271</width>
-    <height>297</height>
+    <width>423</width>
+    <height>435</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -25,81 +25,11 @@
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <widget class="QComboBox" name="center_type_combobox">
-   <property name="geometry">
-    <rect>
-     <x>50</x>
-     <y>100</y>
-     <width>91</width>
-     <height>22</height>
-    </rect>
-   </property>
-   <item>
-    <property name="text">
-     <string>Fixed center</string>
-    </property>
-   </item>
-   <item>
-    <property name="text">
-     <string>Mean center</string>
-    </property>
-   </item>
-   <item>
-    <property name="text">
-     <string>Simplex center</string>
-    </property>
-   </item>
-  </widget>
-  <widget class="QComboBox" name="abel_inversion_sel_combobox">
-   <property name="geometry">
-    <rect>
-     <x>80</x>
-     <y>170</y>
-     <width>91</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <item>
-    <property name="text">
-     <string>Abel Davis</string>
-    </property>
-   </item>
-   <item>
-    <property name="text">
-     <string>Basex</string>
-    </property>
-   </item>
-   <item>
-    <property name="text">
-     <string>Dasch</string>
-    </property>
-   </item>
-   <item>
-    <property name="text">
-     <string>Direct</string>
-    </property>
-   </item>
-   <item>
-    <property name="text">
-     <string>Hansenlaw</string>
-    </property>
-   </item>
-   <item>
-    <property name="text">
-     <string>Linbasex</string>
-    </property>
-   </item>
-   <item>
-    <property name="text">
-     <string>Onion peeling</string>
-    </property>
-   </item>
-  </widget>
   <widget class="QProgressBar" name="progressBar">
    <property name="geometry">
     <rect>
-     <x>20</x>
-     <y>260</y>
+     <x>80</x>
+     <y>240</y>
      <width>231</width>
      <height>21</height>
     </rect>
@@ -111,8 +41,8 @@
   <widget class="QPushButton" name="pushButton">
    <property name="geometry">
     <rect>
-     <x>70</x>
-     <y>230</y>
+     <x>130</x>
+     <y>210</y>
      <width>111</width>
      <height>23</height>
     </rect>
@@ -121,37 +51,11 @@
     <string>Try me!</string>
    </property>
   </widget>
-  <widget class="QLabel" name="center_type_label">
-   <property name="geometry">
-    <rect>
-     <x>0</x>
-     <y>100</y>
-     <width>47</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Center</string>
-   </property>
-  </widget>
-  <widget class="QLabel" name="abel_inversion_sel_label">
-   <property name="geometry">
-    <rect>
-     <x>20</x>
-     <y>170</y>
-     <width>47</width>
-     <height>13</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Algorithm</string>
-   </property>
-  </widget>
   <widget class="QLabel" name="data_filter_label">
    <property name="geometry">
     <rect>
-     <x>20</x>
-     <y>200</y>
+     <x>80</x>
+     <y>180</y>
      <width>47</width>
      <height>13</height>
     </rect>
@@ -163,8 +67,8 @@
   <widget class="QSlider" name="data_filter_slider">
    <property name="geometry">
     <rect>
-     <x>70</x>
-     <y>200</y>
+     <x>130</x>
+     <y>180</y>
      <width>101</width>
      <height>22</height>
     </rect>
@@ -173,95 +77,268 @@
     <enum>Qt::Horizontal</enum>
    </property>
   </widget>
-  <widget class="QPushButton" name="findcenter_button">
-   <property name="geometry">
-    <rect>
-     <x>170</x>
-     <y>100</y>
-     <width>81</width>
-     <height>23</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Find Center!</string>
-   </property>
-  </widget>
-  <widget class="QCheckBox" name="checkBox">
-   <property name="geometry">
-    <rect>
-     <x>70</x>
-     <y>60</y>
-     <width>91</width>
-     <height>17</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Show Range</string>
-   </property>
-  </widget>
   <widget class="QWidget" name="">
    <property name="geometry">
     <rect>
      <x>20</x>
-     <y>0</y>
-     <width>180</width>
-     <height>54</height>
+     <y>10</y>
+     <width>331</width>
+     <height>150</height>
     </rect>
    </property>
-   <layout class="QHBoxLayout" name="horizontalLayout_3">
+   <layout class="QVBoxLayout" name="verticalLayout">
     <item>
-     <layout class="QVBoxLayout" name="verticalLayout_2">
+     <layout class="QHBoxLayout" name="horizontalLayout_9">
       <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_2">
-        <item>
-         <widget class="QLabel" name="Rmin_label">
-          <property name="text">
-           <string>Rmin</string>
-          </property>
-         </widget>
+       <layout class="QGridLayout" name="gridLayout">
+        <item row="0" column="0">
+         <layout class="QHBoxLayout" name="horizontalLayout_4">
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_5">
+            <item>
+             <widget class="QLabel" name="imageCentX_label">
+              <property name="text">
+               <string>CenterX</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QDoubleSpinBox" name="imageCentX_value">
+              <property name="keyboardTracking">
+               <bool>false</bool>
+              </property>
+              <property name="minimum">
+               <double>-1500.000000000000000</double>
+              </property>
+              <property name="maximum">
+               <double>1500.000000000000000</double>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_6">
+            <item>
+             <widget class="QLabel" name="imageCentY_label">
+              <property name="text">
+               <string>CenterY</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QDoubleSpinBox" name="imageCentY_value">
+              <property name="keyboardTracking">
+               <bool>false</bool>
+              </property>
+              <property name="minimum">
+               <double>-1500.000000000000000</double>
+              </property>
+              <property name="maximum">
+               <double>1500.000000000000000</double>
+              </property>
+              <property name="value">
+               <double>500.000000000000000</double>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+         </layout>
         </item>
-        <item>
-         <widget class="QDoubleSpinBox" name="Rmin_spinbox">
-          <property name="keyboardTracking">
-           <bool>false</bool>
-          </property>
-         </widget>
+        <item row="1" column="0">
+         <layout class="QHBoxLayout" name="horizontalLayout_8">
+          <item>
+           <widget class="QComboBox" name="center_type_combobox">
+            <item>
+             <property name="text">
+              <string>Fixed center</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Mean center</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Simplex center</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="findcenter_button">
+            <property name="text">
+             <string>Find Center!</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item row="2" column="0">
+         <layout class="QHBoxLayout" name="horizontalLayout_3">
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_2">
+            <item>
+             <widget class="QLabel" name="Rmin_label">
+              <property name="text">
+               <string>Rmin</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QDoubleSpinBox" name="Rmin_spinbox">
+              <property name="keyboardTracking">
+               <bool>false</bool>
+              </property>
+              <property name="maximum">
+               <double>1500.000000000000000</double>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout">
+            <item>
+             <widget class="QLabel" name="Rmax_label">
+              <property name="text">
+               <string>Rmax</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QDoubleSpinBox" name="Rmax_spinbox">
+              <property name="keyboardTracking">
+               <bool>false</bool>
+              </property>
+              <property name="maximum">
+               <double>1500.000000000000000</double>
+              </property>
+              <property name="value">
+               <double>500.000000000000000</double>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </item>
+        <item row="3" column="0">
+         <layout class="QHBoxLayout" name="horizontalLayout_7">
+          <item>
+           <widget class="QLabel" name="imageRot_label">
+            <property name="text">
+             <string>Image rotation</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QDoubleSpinBox" name="imageRot_value">
+            <property name="keyboardTracking">
+             <bool>false</bool>
+            </property>
+            <property name="minimum">
+             <double>-360.000000000000000</double>
+            </property>
+            <property name="maximum">
+             <double>360.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </item>
        </layout>
       </item>
       <item>
-       <widget class="QSlider" name="Rmin_slider">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-       </widget>
+       <layout class="QVBoxLayout" name="verticalLayout_5">
+        <item>
+         <widget class="QCheckBox" name="showAxis_checkBox">
+          <property name="text">
+           <string>Show Axis</string>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QCheckBox" name="showCenter_checkBox">
+          <property name="text">
+           <string>Show Center</string>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QCheckBox" name="showRange_checkBox">
+          <property name="text">
+           <string>Show Range</string>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </item>
      </layout>
     </item>
     <item>
-     <layout class="QVBoxLayout" name="verticalLayout">
+     <layout class="QHBoxLayout" name="horizontalLayout_10">
       <item>
-       <layout class="QHBoxLayout" name="horizontalLayout">
-        <item>
-         <widget class="QLabel" name="Rmax_label">
-          <property name="text">
-           <string>Rmax</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QDoubleSpinBox" name="Rmax_spinbox">
-          <property name="keyboardTracking">
-           <bool>false</bool>
-          </property>
-         </widget>
-        </item>
-       </layout>
+       <widget class="QLabel" name="abel_inversion_sel_label">
+        <property name="text">
+         <string>Algorithm</string>
+        </property>
+       </widget>
       </item>
       <item>
-       <widget class="QSlider" name="Rmax_slider">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
+       <widget class="QComboBox" name="abel_inversion_sel_combobox">
+        <item>
+         <property name="text">
+          <string>Abel Davis</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Basex</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Dasch</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Direct</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Hansenlaw</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Linbasex</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Onion peeling</string>
+         </property>
+        </item>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="abel_inversion_pushbutton">
+        <property name="text">
+         <string>Invert image</string>
         </property>
        </widget>
       </item>

@@ -24,7 +24,7 @@ from functions.useful_functions import MyStringAxis
 class VMIPanel(QWidget,Ui_VMI_panel):
     signal_VMI_panel_creation = Signal(object)
     signal_VMI_panel_destruction = Signal(object)
-
+    updateCenter_signal = Signal(float,float)
     def __init__(self, parent=None, index=0, path=None):
         super(VMIPanel, self).__init__(parent)
         #Load UI
@@ -39,22 +39,17 @@ class VMIPanel(QWidget,Ui_VMI_panel):
         self.image = pg.ImageItem()
         self.center_plot = QGraphicsEllipseItem()  
         self.center_plotradius = 10
-        self.center_plot.setPen(pg.mkPen('r', width=3, style=Qt.DashLine))     
-
-
-        # self.straightlines_plot = QPainter()
-        # self.straightlines_plot.drawLine(-1024,0,1024,0)
-        # self.straightlines_plot.drawLine(0,-1024,0,1024)
-        # self.straightlines_plot.setPen(pg.mkPen('w', width=3, style=Qt.DotLine))                      
+        self.center_plot.setPen(pg.mkPen('r', width=3, style=Qt.DashLine))                     
         self.x_line_plot = QGraphicsLineItem()
         self.x_line_plot.setPen(pg.mkPen('w', width=3, style=Qt.DotLine)) 
         self.y_line_plot = QGraphicsLineItem()
-        self.y_line_plot.setPen(pg.mkPen('w', width=3, style=Qt.DotLine))    
-
-        # self.x_line_plot.set  
-        # self.pa
-        # self.straightlines_plot = 100
-        # self.straightlines_plot.setPen(pg.mkPen('w', width=3, style=Qt.DotLine))                      
+        self.y_line_plot.setPen(pg.mkPen('w', width=3, style=Qt.DotLine))       
+        self.RminDisk_plot = QGraphicsEllipseItem()  
+        self.RminDisk_plotradius = 10
+        self.RminDisk_plot.setPen(pg.mkPen('y', width=3, style=Qt.DashLine))     
+        self.RmaxDisk_plot = QGraphicsEllipseItem()  
+        self.RmaxDisk_plotradius = 10
+        self.RmaxDisk_plot.setPen(pg.mkPen('y', width=3, style=Qt.DashLine))   
 
         #Open File
         self.openFile()
@@ -63,81 +58,34 @@ class VMIPanel(QWidget,Ui_VMI_panel):
         #Connect signals
         self.connectVMISignal()
 
-
     def image_selection(self, input=0):
         self.image_index = int(input)        
-        # self.imageSel_value.setValue(self.image_index)
         self.updateImage()
-    def update_centers(self):
-        self.center_x = self.imageCentX_value.value()
-        self.center_y = self.imageCentY_value.value()
-        self.center_plot.setRect(self.center_x-self.center_plotradius, self.center_y-self.center_plotradius, 2*self.center_plotradius, 2*self.center_plotradius)        
-        self.update_axis()
-
-    def update_axis(self):
-        line_x = np.array([-1024,0,1024,0])
-        line_y = np.array([0,-1024,0,1024])
-        line_x[0::2] = line_x[0::2] + self.center_x
-        line_y[0::2] = line_y[0::2] + self.center_x
-        line_x[1::2] = line_x[1::2] + self.center_y
-        line_y[1::2] = line_y[1::2] + self.center_y
-        self.x_line_plot.setLine(line_x[0],line_x[1],line_x[2],line_x[3])
-        self.y_line_plot.setLine(line_y[0],line_y[1],line_y[2],line_y[3])
-
-        self.showCenter(self.showCenter_checkBox.isChecked())
-    def update_angle(self):
-        self.rot_angle = self.imageRot_value.value()
-        self.updateImage()
-
-    def connectVMISignal(self):
-        self.imageCentX_value.valueChanged.connect(self.update_centers)        
-        self.imageCentY_value.valueChanged.connect(self.update_centers)        
-        self.imageRot_value.valueChanged.connect(self.update_angle)        
-        self.imageSel_value.valueChanged.connect(self.image_selection)     
-        self.image_view.scene.sigMouseMoved.connect(self.mouse_moved)
-        self.showCenter_checkBox.stateChanged.connect(self.showCenter)
-        self.showCenter_checkBox.stateChanged.connect(self.showCenter)
-        self.showAxis_checkBox.stateChanged.connect(self.showAxisLine)
-        self.toolbox_button.clicked.connect(self.createToolBox)
-
-        # self.close_button.clicked.connect(self.close_panel_VMI)
-    def createToolBox(self):
-        #Create Widget
-        self.toolbox = VMIToolBoxPanel()
-        #Create Layout for Widget
-        self.toolbox_layout = pg.LayoutWidget()        
-        self.toolbox_layout.addWidget(self.toolbox)
-        #Create Dock for Layout
-        self.toolbox_dock = dockarea.Dock('Toolbox',size = (271,300))
-        self.toolbox_dock.addWidget(self.toolbox_layout)
-
-        # self.toolbox_dock.
-        #Implement in central_widget
-        self.central_widget.addDock(self.toolbox_dock, 'bottom',relativeTo= self.control_dock)
-        self.central_widget.floatDock(self.toolbox_dock)
 
 
     def updateImage(self): 
         self.readFile(self.image_index)        
         self.image.setImage(self.im)  # set image to display, used only for tests
-        # self.image_view.view.axes['left']['item'].setTicks(self.y_array[0], self.y_array[-1], self.im.shape[1])
-        # x = ["%.2f" % i for i in self.x_array]
-        # y = ["%.2f" % i for i in self.y_array]        
-        # xdict = dict(enumerate(x))
-        # stringaxis_x = MyStringAxis(dict(enumerate(x)), orientation='bottom')
-        # stringaxis_y = MyStringAxis(dict(enumerate(y)), orientation='bottom')
-        # self.image_view.view.axes['bottom']['item'].setTicks(stringaxis_x)
-        # self.image_view.view.axes['left']['item'].setTicks(stringaxis_y)
-        # plot = win.addPlot(axisItems={'bottom': stringaxis})
-        # curve = plot.plot(list(xdict.keys()),y)
-        # self.image_view.view.setXRange(self.x_array[0], self.x_array[-1])
-        # self.image_view.view.setYRange(self.x_array[0], self.x_array[-1])
-        # setAxisItems(axisItems=None)
+
+    def connectVMISignal(self):
+        self.toolbox.changingAngle_signal.connect(self.update_angle)
+        self.toolbox.changingCenter_signal.connect(self.update_centers)
+        self.toolbox.changingRange_signal.connect(self.update_range)
+        self.toolbox.showingAxis_signal.connect(self.showAxisLine)
+        self.toolbox.showingCenter_signal.connect(self.showCenter)
+        self.toolbox.showingRange_signal.connect(self.showRange)
+        self.imageSel_value.valueChanged.connect(self.image_selection)     
+        self.image_view.scene.sigMouseMoved.connect(self.mouse_moved)
+        self.updateCenter_signal.connect(self.toolbox.updateCenter)
+
+        
 
     def meanCenter(self):              
-        self.imageCentX_value.setValue((self.im.mean(axis = 1)*np.arange(self.im.shape[1])).sum()/self.im.mean(axis = 1).sum())
-        self.imageCentY_value.setValue((self.im.mean(axis = 0)*np.arange(self.im.shape[0])).sum()/self.im.mean(axis = 0).sum())                
-        self.update_centers()
+        Cx = np.sum(self.im.mean(axis = 1)*np.arange(self.im.shape[1]))/np.sum(self.im.mean(axis = 1))
+        Cy = np.sum(self.im.mean(axis = 0)*np.arange(self.im.shape[0]))/np.sum(self.im.mean(axis = 0))
+        self.toolbox.imageCentX_value.setValue(Cx)
+        self.toolbox.imageCentY_value.setValue(Cy)        
+        self.update_centers(Cx,Cy)
 
     # def read_h5file(self):
     #     with h5py.File(self.path, 'r') as file:                          
@@ -161,8 +109,8 @@ class VMIPanel(QWidget,Ui_VMI_panel):
                 with h5py.File(self.path, 'r') as file:                          
                     self.raw_datas = file['Raw_datas']   
                     self.image_number = self.raw_datas[self.path2].shape[0]  
-                    self.imageCentX_value.setMaximum(self.raw_datas[self.path2].shape[1])
-                    self.imageCentY_value.setMaximum(self.raw_datas[self.path2].shape[2])
+                    self.toolbox.imageCentX_value.setMaximum(self.raw_datas[self.path2].shape[1])
+                    self.toolbox.imageCentY_value.setMaximum(self.raw_datas[self.path2].shape[2])
                     self.im = np.asarray(self.raw_datas[self.path2][0]).T
                     self.meanCenter()                    
                 # self.open_h5file()
@@ -176,7 +124,7 @@ class VMIPanel(QWidget,Ui_VMI_panel):
             with h5py.File(self.path, 'r') as file:                          
                 self.raw_datas = file['Raw_datas']     
                 self.im = np.asarray(self.raw_datas[self.path2][index]).T
-                self.im = rotate(self.im,self.imageRot_value.value(), resize=False,center= [self.imageCentY_value.value(),self.imageCentX_value.value()])                
+                self.im = rotate(self.im,self.toolbox.imageRot_value.value(), resize=False,center= [self.toolbox.imageCentY_value.value(),self.toolbox.imageCentX_value.value()])                
         except Exception:
             print(traceback.format_exception(*sys.exc_info())) 
 
@@ -195,7 +143,10 @@ class VMIPanel(QWidget,Ui_VMI_panel):
         self.image_view.view.addItem(self.center_plot)   
         self.image_view.view.addItem(self.x_line_plot)   
         self.image_view.view.addItem(self.y_line_plot)   
+        self.image_view.view.addItem(self.RminDisk_plot)   
+        self.image_view.view.addItem(self.RmaxDisk_plot)   
         self.direct_image_dock.addWidget(self.image_view)
+
 
         self.updateImage()
 
@@ -210,10 +161,6 @@ class VMIPanel(QWidget,Ui_VMI_panel):
     def close_panel_VMI(self, index):
         self.signal_VMI_panel_destruction.emit(self.panel_index)
         print(f'Close event: VMI panel {self.panel_index} is now closed')  
-        
-        
-        
-
 
     def mouse_moved(self, view_pos):
         try:
@@ -233,6 +180,39 @@ class VMIPanel(QWidget,Ui_VMI_panel):
         except AttributeError:  # when no image is displayed yet
             print(traceback.format_exception(*sys.exc_info()))    
 
+
+
+
+    def update_centers(self,Cx,Cy):
+        self.center_x = Cx
+        self.center_y = Cy       
+        self.Rmin = self.toolbox.Rmin_spinbox.value()
+        self.Rmax = self.toolbox.Rmax_spinbox.value()
+        self.center_plot.setRect(self.center_x-self.center_plotradius, self.center_y-self.center_plotradius, 2*self.center_plotradius, 2*self.center_plotradius)                
+        self.update_axis()
+        self.update_range(self.Rmin,self.Rmax)
+
+    def update_axis(self):
+        line_x = np.array([-1024,0,1024,0])
+        line_y = np.array([0,-1024,0,1024])
+        line_x[0::2] = line_x[0::2] + self.center_x
+        line_y[0::2] = line_y[0::2] + self.center_x
+        line_x[1::2] = line_x[1::2] + self.center_y
+        line_y[1::2] = line_y[1::2] + self.center_y
+        self.x_line_plot.setLine(line_x[0],line_x[1],line_x[2],line_x[3])
+        self.y_line_plot.setLine(line_y[0],line_y[1],line_y[2],line_y[3])
+        # self.showCenter(self.toolbox.showCenter_checkBox.isChecked())
+
+    def update_angle(self,theta):
+        self.rot_angle = theta
+        self.updateImage()
+    def update_range(self,R1,R2):                
+        self.RminDisk_plot.setRect(self.center_x-R1, self.center_y-R1, 2*R1, 2*R1)        
+        self.RmaxDisk_plot.setRect(self.center_x-R2, self.center_y-R2, 2*R2, 2*R2)
+
+    def showRange(self,status):
+        self.RmaxDisk_plot.setVisible(status)
+        self.RminDisk_plot.setVisible(status)
     def showCenter(self,status):
         self.center_plot.setVisible(status)   
     def showAxisLine(self,status):

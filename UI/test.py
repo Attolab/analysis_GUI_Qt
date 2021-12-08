@@ -32,16 +32,11 @@ class MainPanel(QMainWindow,Ui_MainWindow):
         self.setAttribute(Qt.WA_DeleteOnClose, True)
         self.numberofPanel = 0
         self.isPanelopen = []
-        # self.panelIndex = 0
         self._docks_VMI = []
 
     def setupWindows(self):
         self._tableSel_panel = TableSelPanel()
-        # self._dock_tableSel = QDockWidget('Table Selection',self)
-        # self._dock_tableSel.setFeatures(QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable)
-        # self._dock_tableSel.toggleViewAction()
-        # self._dock_tableSel.setWidget(self._tableSel_panel)
-        # self.addDockWidget(Qt.LeftDockWidgetArea,self._dock_tableSel)  
+
         self.setCentralWidget(self._tableSel_panel)
         self._tableSel_panel.tableSel_ComboBox_changed.connect(self.table_selChange)
         self._tableSel_panel.tableSel_doubleclicked.connect(self.table_sel_doubleclicked)

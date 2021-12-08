@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from .abel.tools import polar
+from abel.tools import polar
 from scipy.special import eval_legendre, hyp2f1
 from scipy.interpolate import interp1d
 from math import factorial
