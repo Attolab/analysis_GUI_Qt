@@ -1,4 +1,3 @@
-
 from PyQt5.QtCore import center
 from PySide6.QtCore import (QCoreApplication, QDate, QDateTime, QLocale,
     QMetaObject, QObject, QPoint, QRect, QRectF,
@@ -12,15 +11,14 @@ from PySide6.QtWidgets import (QApplication, QGraphicsEllipseItem,QGraphicsLineI
 from .ui.VMI_panel_ui_new import Ui_VMI_panel
 import pyqtgraph as pg
 from skimage.transform import rotate
-from panels.VMI_toolbox_panel import VMIToolBoxPanel
 import pyqtgraph  as pg  
 from pyqtgraph import dockarea
 import sys, traceback
 import h5py
 import numpy as np
 import pathlib
-from functions.useful_functions import MyStringAxis
-# P = QtCore.Qt.WA_DeleteOnClose
+from abel.tools import polar
+
 class VMIPanel(QWidget,Ui_VMI_panel):
     signal_VMI_panel_creation = Signal(object)
     signal_VMI_panel_destruction = Signal(object)
@@ -35,7 +33,23 @@ class VMIPanel(QWidget,Ui_VMI_panel):
         self.center_x = 0
         self.center_y = 0
         self.rot_angle = 0
+        self.dR = 1
+        self.dTheta = np.pi/180
         #Initialize some widgets
+        self.initialize_plotWidgets()
+        #Open File
+        self.openFile()
+        #Load File
+        self.VMI_load_func()
+        #Connect signals
+        self.connectVMISignal()
+
+    def initialize_plotWidgets(self):
+        # self.radial_dist = pg.PlotItem()
+        self.radial_dist = pg.PlotDataItem()
+        # self.angular_dist = pg.PlotItem()
+        self.angular_dist = pg.PlotDataItem()
+        self.data_dist = pg.PlotDataItem()
         self.image = pg.ImageItem()
         self.center_plot = QGraphicsEllipseItem()  
         self.center_plotradius = 10
@@ -51,34 +65,35 @@ class VMIPanel(QWidget,Ui_VMI_panel):
         self.RmaxDisk_plotradius = 10
         self.RmaxDisk_plot.setPen(pg.mkPen('y', width=3, style=Qt.DashLine))   
 
-        #Open File
-        self.openFile()
-        #Load File
-        self.VMI_load_func()
-        #Connect signals
-        self.connectVMISignal()
-
-    def image_selection(self, input=0):
-        self.image_index = int(input)        
-        self.updateImage()
-
-
-    def updateImage(self): 
-        self.readFile(self.image_index)        
-        self.image.setImage(self.im)  # set image to display, used only for tests
 
     def connectVMISignal(self):
         self.toolbox.changingAngle_signal.connect(self.update_angle)
         self.toolbox.changingCenter_signal.connect(self.update_centers)
         self.toolbox.changingRange_signal.connect(self.update_range)
-        self.toolbox.showingAxis_signal.connect(self.showAxisLine)
-        self.toolbox.showingCenter_signal.connect(self.showCenter)
-        self.toolbox.showingRange_signal.connect(self.showRange)
-        self.imageSel_value.valueChanged.connect(self.image_selection)     
-        self.image_view.scene.sigMouseMoved.connect(self.mouse_moved)
-        self.updateCenter_signal.connect(self.toolbox.updateCenter)
+        self.toolbox.showingAxis_signal.connect(self.show_axisLine)
+        self.toolbox.showingCenter_signal.connect(self.show_center)
+        self.toolbox.showingRange_signal.connect(self.show_range)
+        self.toolbox.changingAngularBin_signal.connect(self.update_radialbin)
+        self.toolbox.changingRadialBin_signal.connect(self.update_angularbin)
 
+        self.imageSel_value.valueChanged.connect(self.updateData)     
+        self.image_view.scene.sigMouseMoved.connect(self.mouse_moved)
+        self.updateCenter_signal.connect(self.toolbox.updateCenter)        
+
+    def calculate_polar(self):
+        self.im_polar,self.rgrid,self.thetagrid = polar.reproject_image_into_polar(data = self.im,origin = (self.center_x,self.center_y),Jacobian=True,dr=self.dR,dt=self.dTheta)
+        self.radial_bins = self.rgrid[:,0]
+        self.angular_bins = self.thetagrid[0,:]*180/np.pi
+        self.makeMask()
+        self.updateRadialPlot()
+        self.updateAngularPlot()
         
+
+    def makeMask(self):
+        # self.Angularmask= np.logical_and(self.thetagrid >= 0, self.thetagrid < 2*np.pi)
+        self.mask_angular_bins = np.logical_and(self.angular_bins >= 0, self.angular_bins < 360)
+        # self.Radialmask = np.logical_and(self.rgrid > self.Rmin, self.rgrid < self.Rmax)
+        self.mask_radial_bins = np.logical_and(self.radial_bins > self.Rmin, self.radial_bins < self.Rmax)
 
     def meanCenter(self):              
         Cx = np.sum(self.im.mean(axis = 1)*np.arange(self.im.shape[1]))/np.sum(self.im.mean(axis = 1))
@@ -87,16 +102,19 @@ class VMIPanel(QWidget,Ui_VMI_panel):
         self.toolbox.imageCentY_value.setValue(Cy)        
         self.update_centers(Cx,Cy)
 
-    # def read_h5file(self):
-    #     with h5py.File(self.path, 'r') as file:                          
-    #         self.raw_datas = file['Raw_datas']            
+    def createDock(self):
+        self.radial_plot_dock = dockarea.Dock("Radial distribution", size=(600, 600))
+        self.angular_plot_dock = dockarea.Dock("Angular distribution", size=(600, 600))
+        self.direct_image_dock = dockarea.Dock("Direct Image", size=(600, 600))
+        self.data_plot_dock = dockarea.Dock("Data", size=(600, 600))
 
-    # def read_npyfile(self):
-    #     with open(self.path,'r') as file:
-    #         np.load(file)
+        self.central_widget.addDock(self.radial_plot_dock, 'right', self.control_dock)                        
+        self.central_widget.addDock(self.angular_plot_dock, 'above', self.radial_plot_dock)                       
+        self.central_widget.addDock(self.direct_image_dock, 'above', self.angular_plot_dock)                        
+        # self.central_widget.addDock(self.data_plot_dock, 'right', self.control_dock)     
 
-    def openFile(self):            
-        
+    def openFile(self): 
+        self.createDock()                      
         if self.path is None:
             self.path = str(QFileDialog.getOpenFileName(self, 'Import image','Q:\LIDyL\Atto\ATTOLAB\SE1\SlowRABBIT')[0])    
             # self.path = str(QFileDialog.getOpenFileName(self, 'Import image','D:\\Work\\Saclay\\Git\\analysis_GUI_Qt')[0])        
@@ -112,21 +130,23 @@ class VMIPanel(QWidget,Ui_VMI_panel):
                     self.toolbox.imageCentX_value.setMaximum(self.raw_datas[self.path2].shape[1])
                     self.toolbox.imageCentY_value.setMaximum(self.raw_datas[self.path2].shape[2])
                     self.im = np.asarray(self.raw_datas[self.path2][0]).T
-                    self.meanCenter()                    
-                # self.open_h5file()
-            # self.open_npyfile()           
         except Exception:
             print(traceback.format_exception(*sys.exc_info()))   
+        self.meanCenter()                            
         self.signal_VMI_panel_creation.emit(['VMI',self.path])
 
     def readFile(self, index=0):
         try:
             with h5py.File(self.path, 'r') as file:                          
                 self.raw_datas = file['Raw_datas']     
-                self.im = np.asarray(self.raw_datas[self.path2][index]).T
-                self.im = rotate(self.im,self.toolbox.imageRot_value.value(), resize=False,center= [self.toolbox.imageCentY_value.value(),self.toolbox.imageCentX_value.value()])                
+                self.im = np.asarray(self.raw_datas[self.path2][index]).T                
         except Exception:
             print(traceback.format_exception(*sys.exc_info())) 
+
+        self.im = rotate(self.im,self.toolbox.imageRot_value.value(), resize=False,center= [self.toolbox.imageCentY_value.value(),self.toolbox.imageCentX_value.value()])                                
+        self.calculate_polar()            
+
+
 
     def VMI_load_func(self):
         self.image_index = 0
@@ -136,6 +156,26 @@ class VMIPanel(QWidget,Ui_VMI_panel):
         self.imageSel_value.setMaximum(self.image_number)
         self.imageSel_value.setValue(self.image_index)
         self.dataset_value.setText(f'{self.path_object.stem }')    
+        
+        
+        
+        # self.radial_dist = pg.PlotDataItem()
+        # self.angular_dist = pg.PlotDataItem()
+        # self.data_dist = pg.PlotDataItem()
+        self.radial_dist.setData(x = self.radial_bins, y=np.sum(self.im_polar,axis = 1))
+        self.angular_dist.setData(x = self.angular_bins, y=np.sum(self.im_polar,axis = 0))
+        # self.angular_dist.setData(x = )
+        # self.data_dist.setData(x = )
+        self.radial_item = pg.PlotItem()
+        self.radial_item.addItem(self.radial_dist)
+        self.angular_item = pg.PlotItem()
+        self.angular_item.addItem(self.angular_dist)
+        self.radial_view = pg.PlotWidget(plotItem = self.radial_item)
+        self.angular_view = pg.PlotWidget(plotItem = self.angular_item)
+        self.radial_plot_dock.addWidget(self.radial_view)
+        self.angular_plot_dock.addWidget(self.angular_view)
+        
+        
         self.image.setImage(self.im)  # set image to display, used only for tests
         self.image_view = pg.ImageView(imageItem=self.image, view=pg.PlotItem())        
         self.image_view.view.invertY(False)
@@ -148,7 +188,7 @@ class VMIPanel(QWidget,Ui_VMI_panel):
         self.direct_image_dock.addWidget(self.image_view)
 
 
-        self.updateImage()
+        self.updatePlots()
 
     def colormap(self):
         # doing a custom colormap (trying to make it close to the Labview one)
@@ -178,19 +218,36 @@ class VMIPanel(QWidget,Ui_VMI_panel):
                 self.coords_lb.setText('')
             #time.sleep(0.1)        
         except AttributeError:  # when no image is displayed yet
-            print(traceback.format_exception(*sys.exc_info()))    
+            print(traceback.format_exception(*sys.exc_info()))  
 
+    def updateData(self, input=0):
+        self.image_index = int(input)
+        self.readFile(self.image_index)        
+        self.updatePlots()
 
+    def updatePlots(self):
+        self.updateRadialPlot()
+        self.updateAngularPlot()
+        self.updateImagePlot()
 
+    def updateRadialPlot(self):
+        self.radial_dist.setData(x=self.radial_bins[self.mask_radial_bins],y=np.sum(self.im_polar[self.mask_radial_bins,:],axis = 1))
+
+    def updateAngularPlot(self):        
+            # self.im_polar = self.im_polar[self.Radialmask]
+        self.angular_dist.setData(x=self.angular_bins[self.mask_angular_bins],y=np.sum(self.im_polar[:,self.mask_angular_bins], axis=0))
+    def updateImagePlot(self): 
+        self.image.setImage(self.im)  # set image to display, used only for tests
 
     def update_centers(self,Cx,Cy):
         self.center_x = Cx
-        self.center_y = Cy       
+        self.center_y = Cy               
         self.Rmin = self.toolbox.Rmin_spinbox.value()
         self.Rmax = self.toolbox.Rmax_spinbox.value()
         self.center_plot.setRect(self.center_x-self.center_plotradius, self.center_y-self.center_plotradius, 2*self.center_plotradius, 2*self.center_plotradius)                
         self.update_axis()
         self.update_range(self.Rmin,self.Rmax)
+        self.calculate_polar()
 
     def update_axis(self):
         line_x = np.array([-1024,0,1024,0])
@@ -201,56 +258,30 @@ class VMIPanel(QWidget,Ui_VMI_panel):
         line_y[1::2] = line_y[1::2] + self.center_y
         self.x_line_plot.setLine(line_x[0],line_x[1],line_x[2],line_x[3])
         self.y_line_plot.setLine(line_y[0],line_y[1],line_y[2],line_y[3])
-        # self.showCenter(self.toolbox.showCenter_checkBox.isChecked())
 
     def update_angle(self,theta):
         self.rot_angle = theta
-        self.updateImage()
+        self.updateImagePlot()
     def update_range(self,R1,R2):                
         self.RminDisk_plot.setRect(self.center_x-R1, self.center_y-R1, 2*R1, 2*R1)        
         self.RmaxDisk_plot.setRect(self.center_x-R2, self.center_y-R2, 2*R2, 2*R2)
+    def update_angularbin(self,dTheta):
+        self.dTheta = dTheta     
+        self.calculate_polar()   
+    def update_radialbin(self,dR):
+        self.dR = dR
+        self.calculate_polar()
 
-    def showRange(self,status):
+    def show_range(self,status):
         self.RmaxDisk_plot.setVisible(status)
         self.RminDisk_plot.setVisible(status)
-    def showCenter(self,status):
+    def show_center(self,status):
         self.center_plot.setVisible(status)   
-    def showAxisLine(self,status):
+    def show_axisLine(self,status):
         self.x_line_plot.setVisible(status)
         self.y_line_plot.setVisible(status)
         
-
-
-                
-        # self.image_view.scene.addItem()
-
-
-        # view.addItem(QGraphicsEllipseItem(QRectF(center[0], center[1], 10, 10)))
-
-        # painter = QPainter(self.direct_image_dock)
-        # painter.setPen(pg.mkPen('y', width=3, style=Qt.DashLine) )
-        # painter.drawArc(QRect(center[0], center[1], 10, 10), 0, 5760)
-        # painter.drawText(150, 250, 'Hellow world!')
-
-
-    # def doAbel(self,parameters):
-    #     if remove_bkg:
-    #         data = data - data[0:200, 0:200].mean()
-    #         if i == 0:
-    #         abel_obj = Abel_object(self.im, self.center, center_y, d_alpha_deg, dr, N, Rmax)
-    #             abel_obj.precalculate()
-    #         else:
-    #             abel_obj.set_data(data)
-    #         abel_obj.invert()
-
-    #         if save_betas:
-    #             for index,f in enumerate(filename_beta[:,1]):
-    #                 np.save(f, abel_obj.F[index])    
-    #     self.close()
-
-
-
-
+      
 
 def main():
 

@@ -132,21 +132,21 @@ class Abel_object():
             from Table I. I checked that it's equal to M_eqn13(N_R,n,k). However it's faster than M_eq13 so this is the function
             actually used '''
             d_alpha = self.d_alpha
-            dr = self.dr
+            dr_over2 = self.dr/2
             M = np.zeros((N_R,N_R))
             coeff = dr*d_alpha
             for i in range (0, N_R):
                 for ip in range(i, N_R):
+                    R_ip = self.R_vector[ip] # Ri
+                    R_minus = self.R_vector[i] - dr_over2 # Ri v = Ri - DeltaR/2
                     if ip == i:
                         R_plus = self.R_vector[i]
                     else:
-                        R_plus = self.R_vector[i] + dr/2 # Ri ^ = Ri + DeltaR/2
-                    R_minus = self.R_vector[i] - dr/2 # Ri v = Ri - DeltaR/2
-                    R_ip = self.R_vector[ip] # ri'
+                        R_plus = self.R_vector[i] + dr_over2 # Ri ^ = Ri + DeltaR/2
                     R_plus_frac = R_plus/R_ip  # Ri ^ / Ri
                     R_minus_frac = R_minus/R_ip # Ri v  / Ri 
-                    sqrtR_plus = np.sqrt(1-(R_plus/R_ip)**2) # (1 - (Ri ^  / Ri)^2)^1/2
-                    sqrtR_minus = np.sqrt(1-(R_minus/R_ip)**2) # (1 - (Ri v  / Ri)^2)^1/2
+                    sqrtR_plus = np.sqrt(1-(R_plus_frac)**2) # (1 - (Ri ^  / Ri)^2)^1/2
+                    sqrtR_minus = np.sqrt(1-(R_minus_frac)**2) # (1 - (Ri v  / Ri)^2)^1/2
                     asin_Rdiff =  np.arcsin(R_plus_frac) - np.arcsin(R_minus_frac) # asin(Ri ^ / Ri) - asin(Ri v / Ri)
                     if(n==0 and k==0): # M00
                         M[i,ip] = 2*coeff*(sqrtR_minus-sqrtR_plus)
@@ -236,20 +236,10 @@ class Abel_object():
                     self.parent.progress_precalc.repaint()
                 except AttributeError:
                     print(int((k + 1) / (2 * N + 1) * 50), " %")
-
             for k in range(2 * N, -1, -1):  # reversed loop from 2N to 0 included
-                if k % 2 == 0:  # even k
-                    if k == 2 * N:  # no sum over i
-                        pass
-                    elif k == 2 * N - 2:  # only one term in the sum
-                        i = 1
-                        self.Mnk[(k + 2 * i, i)] = self.M(self.N_R, k + 2 * i, i)
-                    else:
-                        for i in range(1, N - k // 2 + 1):
-                            self.Mnk[(k + 2 * i, i)] = self.M(self.N_R, k + 2 * i, i)
-                elif k % 2 == 1:  # odd k
-                    for i in range(1, N - (int(k / 2) + 1) + 1):
-                        self.Mnk[(k + 2 * i, i)] = self.M(self.N_R, k + 2 * i, i)
+                N_threshold = N - ((k+1) // 2) #Threshold for entering the sum in equation 19 if smaller than N                                        
+                for i in range(N_threshold,0,-1):  #Going backwards since range function in Python is a real pain  
+                    self.Mnk[(k + 2 * i, i)] = self.M(self.N_R, k + 2 * i, i)
                 try:
                     self.parent.progress_precalc.setValue(int((2 * N + 1 - k) / (2 * N + 1) * 50 + 50))
                     self.parent.progress_precalc.repaint()
@@ -260,9 +250,10 @@ class Abel_object():
             np.save('Mnk_' + filename, self.Mnk)
 
     def invert(self): 
+        N = self.N
         # Application of eqn. 16
-        delta = np.zeros([2 * self.N + 1, self.N_R])
-        for k in range(0, 2 * self.N + 1):
+        delta = np.zeros([2 * N + 1, self.N_R])
+        for k in range(0, 2 * N + 1):
             for Ri in range(0, self.N_R):
                 delta[k, Ri] = (2 * k + 1) / 2 * \
                         np.trapz(np.abs(np.sin(self.alpha_vector))*\
@@ -273,13 +264,14 @@ class Abel_object():
                         # old note from Dominique:
                         # I added the 0.5 because we integrate between 0 and 2pi
                         # instead of between 0 and pi
-        # Application of eqn. 19
-        for k in range(2 * self.N, -1, -1):  # reversed loop from 2N to 0 included
-            m2 = delta[k] - np.array(
-                [np.dot(self.Mnk[(k + 2 * i, i)], self.F[k + 2 * i]) \
-                    for i in range(1, self.N - (int(k / 2) + 1) + 1)]).sum(axis=0)
-            self.F[k] = np.dot(self.M_inv[k], m2)   
-   
+        # Application of eqn. 19 
+        for k in range(2 * N, -1 ,-1): # reversed loop from 2N to 0 included
+            m2 = delta[k]
+            N_threshold = N - ((k+1) // 2) #Threshold for entering the sum in equation 19 if smaller than N        
+            m2 = m2 - np.array([np.dot(self.Mnk[(k + 2 * i, i)], self.F1[k + 2 * i]) \
+                for i in range(N_threshold,0,-1)]).sum(axis=0)  #Going backwards since range function in Python is a real pain                             
+            self.F[k] = np.dot(self.M_inv[k], m2)
+
 
 if __name__ == '__main__':
 
@@ -304,9 +296,10 @@ if __name__ == '__main__':
         data = np.transpose(data)
     if remove_bkg:
         data = data - data[0:200,0:200].mean()
+    data = data / np.sum(np.sum(data))        
 
-    plt.figure('Raw image')
-    plt.imshow(data,vmax = Vmax,cmap='jet')
+    # plt.figure('Raw image')
+    # plt.imshow(data,vmax = Vmax,cmap='jet')
     # plt.scatter(center_x, center_y ,color='m')
 
     center_y = 2048 - center_y  # because of the top/bottom coordinate convention

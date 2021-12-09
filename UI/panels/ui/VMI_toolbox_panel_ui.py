@@ -17,8 +17,8 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QDoubleSpinBox,
     QGridLayout, QHBoxLayout, QLabel, QProgressBar,
-    QPushButton, QSizePolicy, QSlider, QVBoxLayout,
-    QWidget)
+    QPushButton, QSizePolicy, QSlider, QSpinBox,
+    QVBoxLayout, QWidget)
 
 class Ui_VMI_toolbox_panel(object):
     def setupUi(self, VMI_toolbox_panel):
@@ -31,28 +31,19 @@ class Ui_VMI_toolbox_panel(object):
         sizePolicy.setHeightForWidth(VMI_toolbox_panel.sizePolicy().hasHeightForWidth())
         VMI_toolbox_panel.setSizePolicy(sizePolicy)
         VMI_toolbox_panel.setMinimumSize(QSize(271, 297))
-        self.progressBar = QProgressBar(VMI_toolbox_panel)
-        self.progressBar.setObjectName(u"progressBar")
-        self.progressBar.setGeometry(QRect(80, 240, 231, 21))
-        self.progressBar.setValue(24)
-        self.pushButton = QPushButton(VMI_toolbox_panel)
-        self.pushButton.setObjectName(u"pushButton")
-        self.pushButton.setGeometry(QRect(130, 210, 111, 23))
         self.data_filter_label = QLabel(VMI_toolbox_panel)
         self.data_filter_label.setObjectName(u"data_filter_label")
-        self.data_filter_label.setGeometry(QRect(80, 180, 47, 13))
+        self.data_filter_label.setGeometry(QRect(90, 320, 47, 13))
         self.data_filter_slider = QSlider(VMI_toolbox_panel)
         self.data_filter_slider.setObjectName(u"data_filter_slider")
-        self.data_filter_slider.setGeometry(QRect(130, 180, 101, 22))
+        self.data_filter_slider.setGeometry(QRect(140, 320, 101, 22))
         self.data_filter_slider.setOrientation(Qt.Horizontal)
         self.widget = QWidget(VMI_toolbox_panel)
         self.widget.setObjectName(u"widget")
-        self.widget.setGeometry(QRect(20, 10, 331, 150))
-        self.verticalLayout = QVBoxLayout(self.widget)
-        self.verticalLayout.setObjectName(u"verticalLayout")
-        self.verticalLayout.setContentsMargins(0, 0, 0, 0)
-        self.horizontalLayout_9 = QHBoxLayout()
+        self.widget.setGeometry(QRect(21, 11, 329, 117))
+        self.horizontalLayout_9 = QHBoxLayout(self.widget)
         self.horizontalLayout_9.setObjectName(u"horizontalLayout_9")
+        self.horizontalLayout_9.setContentsMargins(0, 0, 0, 0)
         self.gridLayout = QGridLayout()
         self.gridLayout.setObjectName(u"gridLayout")
         self.horizontalLayout_4 = QHBoxLayout()
@@ -87,7 +78,7 @@ class Ui_VMI_toolbox_panel(object):
         self.imageCentY_value.setKeyboardTracking(False)
         self.imageCentY_value.setMinimum(-1500.000000000000000)
         self.imageCentY_value.setMaximum(1500.000000000000000)
-        self.imageCentY_value.setValue(500.000000000000000)
+        self.imageCentY_value.setValue(0.000000000000000)
 
         self.horizontalLayout_6.addWidget(self.imageCentY_value)
 
@@ -199,17 +190,52 @@ class Ui_VMI_toolbox_panel(object):
 
         self.horizontalLayout_9.addLayout(self.verticalLayout_5)
 
+        self.widget1 = QWidget(VMI_toolbox_panel)
+        self.widget1.setObjectName(u"widget1")
+        self.widget1.setGeometry(QRect(70, 210, 193, 77))
+        self.horizontalLayout_15 = QHBoxLayout(self.widget1)
+        self.horizontalLayout_15.setObjectName(u"horizontalLayout_15")
+        self.horizontalLayout_15.setContentsMargins(0, 0, 0, 0)
+        self.verticalLayout_2 = QVBoxLayout()
+        self.verticalLayout_2.setObjectName(u"verticalLayout_2")
+        self.matrix_checkBox = QCheckBox(self.widget1)
+        self.matrix_checkBox.setObjectName(u"matrix_checkBox")
 
-        self.verticalLayout.addLayout(self.horizontalLayout_9)
+        self.verticalLayout_2.addWidget(self.matrix_checkBox)
 
-        self.horizontalLayout_10 = QHBoxLayout()
-        self.horizontalLayout_10.setObjectName(u"horizontalLayout_10")
-        self.abel_inversion_sel_label = QLabel(self.widget)
+        self.calculatematrix_pushbutton = QPushButton(self.widget1)
+        self.calculatematrix_pushbutton.setObjectName(u"calculatematrix_pushbutton")
+
+        self.verticalLayout_2.addWidget(self.calculatematrix_pushbutton)
+
+        self.progressBar = QProgressBar(self.widget1)
+        self.progressBar.setObjectName(u"progressBar")
+        self.progressBar.setValue(24)
+
+        self.verticalLayout_2.addWidget(self.progressBar)
+
+
+        self.horizontalLayout_15.addLayout(self.verticalLayout_2)
+
+        self.abel_inversion_pushbutton_2 = QPushButton(self.widget1)
+        self.abel_inversion_pushbutton_2.setObjectName(u"abel_inversion_pushbutton_2")
+
+        self.horizontalLayout_15.addWidget(self.abel_inversion_pushbutton_2)
+
+        self.widget2 = QWidget(VMI_toolbox_panel)
+        self.widget2.setObjectName(u"widget2")
+        self.widget2.setGeometry(QRect(21, 141, 258, 57))
+        self.verticalLayout = QVBoxLayout(self.widget2)
+        self.verticalLayout.setObjectName(u"verticalLayout")
+        self.verticalLayout.setContentsMargins(0, 0, 0, 0)
+        self.horizontalLayout_13 = QHBoxLayout()
+        self.horizontalLayout_13.setObjectName(u"horizontalLayout_13")
+        self.abel_inversion_sel_label = QLabel(self.widget2)
         self.abel_inversion_sel_label.setObjectName(u"abel_inversion_sel_label")
 
-        self.horizontalLayout_10.addWidget(self.abel_inversion_sel_label)
+        self.horizontalLayout_13.addWidget(self.abel_inversion_sel_label)
 
-        self.abel_inversion_sel_combobox = QComboBox(self.widget)
+        self.abel_inversion_sel_combobox = QComboBox(self.widget2)
         self.abel_inversion_sel_combobox.addItem("")
         self.abel_inversion_sel_combobox.addItem("")
         self.abel_inversion_sel_combobox.addItem("")
@@ -219,15 +245,72 @@ class Ui_VMI_toolbox_panel(object):
         self.abel_inversion_sel_combobox.addItem("")
         self.abel_inversion_sel_combobox.setObjectName(u"abel_inversion_sel_combobox")
 
-        self.horizontalLayout_10.addWidget(self.abel_inversion_sel_combobox)
+        self.horizontalLayout_13.addWidget(self.abel_inversion_sel_combobox)
 
-        self.abel_inversion_pushbutton = QPushButton(self.widget)
+        self.abel_inversion_pushbutton = QPushButton(self.widget2)
         self.abel_inversion_pushbutton.setObjectName(u"abel_inversion_pushbutton")
 
-        self.horizontalLayout_10.addWidget(self.abel_inversion_pushbutton)
+        self.horizontalLayout_13.addWidget(self.abel_inversion_pushbutton)
 
 
-        self.verticalLayout.addLayout(self.horizontalLayout_10)
+        self.verticalLayout.addLayout(self.horizontalLayout_13)
+
+        self.horizontalLayout_14 = QHBoxLayout()
+        self.horizontalLayout_14.setObjectName(u"horizontalLayout_14")
+        self.horizontalLayout_10 = QHBoxLayout()
+        self.horizontalLayout_10.setObjectName(u"horizontalLayout_10")
+        self.abel_inversion_NPhotons_label = QLabel(self.widget2)
+        self.abel_inversion_NPhotons_label.setObjectName(u"abel_inversion_NPhotons_label")
+
+        self.horizontalLayout_10.addWidget(self.abel_inversion_NPhotons_label)
+
+        self.abel_inversion_NPhotons_value = QSpinBox(self.widget2)
+        self.abel_inversion_NPhotons_value.setObjectName(u"abel_inversion_NPhotons_value")
+        self.abel_inversion_NPhotons_value.setSingleStep(0)
+        self.abel_inversion_NPhotons_value.setValue(2)
+
+        self.horizontalLayout_10.addWidget(self.abel_inversion_NPhotons_value)
+
+
+        self.horizontalLayout_14.addLayout(self.horizontalLayout_10)
+
+        self.horizontalLayout_11 = QHBoxLayout()
+        self.horizontalLayout_11.setObjectName(u"horizontalLayout_11")
+        self.dTheta_label = QLabel(self.widget2)
+        self.dTheta_label.setObjectName(u"dTheta_label")
+
+        self.horizontalLayout_11.addWidget(self.dTheta_label)
+
+        self.dTheta_value = QDoubleSpinBox(self.widget2)
+        self.dTheta_value.setObjectName(u"dTheta_value")
+        self.dTheta_value.setKeyboardTracking(False)
+        self.dTheta_value.setMaximum(360.000000000000000)
+
+        self.horizontalLayout_11.addWidget(self.dTheta_value)
+
+
+        self.horizontalLayout_14.addLayout(self.horizontalLayout_11)
+
+        self.horizontalLayout_12 = QHBoxLayout()
+        self.horizontalLayout_12.setObjectName(u"horizontalLayout_12")
+        self.dR_label = QLabel(self.widget2)
+        self.dR_label.setObjectName(u"dR_label")
+
+        self.horizontalLayout_12.addWidget(self.dR_label)
+
+        self.dR_value = QDoubleSpinBox(self.widget2)
+        self.dR_value.setObjectName(u"dR_value")
+        self.dR_value.setKeyboardTracking(False)
+        self.dR_value.setMaximum(1.000000000000000)
+        self.dR_value.setValue(1.000000000000000)
+
+        self.horizontalLayout_12.addWidget(self.dR_value)
+
+
+        self.horizontalLayout_14.addLayout(self.horizontalLayout_12)
+
+
+        self.verticalLayout.addLayout(self.horizontalLayout_14)
 
 
         self.retranslateUi(VMI_toolbox_panel)
@@ -237,7 +320,6 @@ class Ui_VMI_toolbox_panel(object):
 
     def retranslateUi(self, VMI_toolbox_panel):
         VMI_toolbox_panel.setWindowTitle(QCoreApplication.translate("VMI_toolbox_panel", u"Form", None))
-        self.pushButton.setText(QCoreApplication.translate("VMI_toolbox_panel", u"Try me!", None))
         self.data_filter_label.setText(QCoreApplication.translate("VMI_toolbox_panel", u"Filtering", None))
         self.imageCentX_label.setText(QCoreApplication.translate("VMI_toolbox_panel", u"CenterX", None))
         self.imageCentY_label.setText(QCoreApplication.translate("VMI_toolbox_panel", u"CenterY", None))
@@ -252,6 +334,9 @@ class Ui_VMI_toolbox_panel(object):
         self.showAxis_checkBox.setText(QCoreApplication.translate("VMI_toolbox_panel", u"Show Axis", None))
         self.showCenter_checkBox.setText(QCoreApplication.translate("VMI_toolbox_panel", u"Show Center", None))
         self.showRange_checkBox.setText(QCoreApplication.translate("VMI_toolbox_panel", u"Show Range", None))
+        self.matrix_checkBox.setText(QCoreApplication.translate("VMI_toolbox_panel", u"Matrix exist?", None))
+        self.calculatematrix_pushbutton.setText(QCoreApplication.translate("VMI_toolbox_panel", u"Precalculate matrix", None))
+        self.abel_inversion_pushbutton_2.setText(QCoreApplication.translate("VMI_toolbox_panel", u"Try me!", None))
         self.abel_inversion_sel_label.setText(QCoreApplication.translate("VMI_toolbox_panel", u"Algorithm", None))
         self.abel_inversion_sel_combobox.setItemText(0, QCoreApplication.translate("VMI_toolbox_panel", u"Abel Davis", None))
         self.abel_inversion_sel_combobox.setItemText(1, QCoreApplication.translate("VMI_toolbox_panel", u"Basex", None))
@@ -262,5 +347,8 @@ class Ui_VMI_toolbox_panel(object):
         self.abel_inversion_sel_combobox.setItemText(6, QCoreApplication.translate("VMI_toolbox_panel", u"Onion peeling", None))
 
         self.abel_inversion_pushbutton.setText(QCoreApplication.translate("VMI_toolbox_panel", u"Invert image", None))
+        self.abel_inversion_NPhotons_label.setText(QCoreApplication.translate("VMI_toolbox_panel", u"Nphtons", None))
+        self.dTheta_label.setText(QCoreApplication.translate("VMI_toolbox_panel", u"dTheta", None))
+        self.dR_label.setText(QCoreApplication.translate("VMI_toolbox_panel", u"dR", None))
     # retranslateUi
 

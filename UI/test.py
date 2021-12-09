@@ -98,11 +98,6 @@ class MainPanel(QMainWindow,Ui_MainWindow):
     def table_sel_doubleclicked(self,object):
         print(object)
 
-
-    # def closeEventVMI(self, index):        
-    #     print('Panel is removed')
-    #     self._dock_VMI.close()
-
 class DataPanel(QDockWidget):
     dock_closing_signal = Signal(int,int)
     def __init__(self,parent=None,  panel_type='VMI', index=0, status = True):
