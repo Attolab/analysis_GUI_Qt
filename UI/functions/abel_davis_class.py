@@ -36,8 +36,8 @@ class Abel_object():
 
         self.parent = parent
 
-        self.center_x = center_x
-        self.center_y = center_y
+        self.center_rows = center_rows
+        self.center_cols = center_cols
         self.d_alpha_deg = d_alpha_deg
         self.d_alpha = d_alpha_deg * np.pi / 180  # deg to rad conversion
         self.dr = dr
@@ -47,7 +47,6 @@ class Abel_object():
         self.Ny, self.Nx = data.shape
 
         self.N_alpha = int(2 * np.pi / self.d_alpha)
-        # self.N_R = int(min((self.Ny - center_y) / dr, (self.Nx - center_x) / dr))
         self.N_R = int(Rmax/dr)
 
         self.R_vector = np.linspace(dr, Rmax, self.N_R)
@@ -56,9 +55,7 @@ class Abel_object():
         self.data_polar, r_grid, theta_grid = polar.reproject_image_into_polar(
             data, origin=(center_rows, center_cols), dr=dr, dt=self.d_alpha, Jacobian=True)
         self.alpha_vector = theta_grid[0,:]
-
-        self.M_inv = {}
-        self.Mnk = {}
+        self.M_temp_dic = {}
         self.F = {}
         self.beta ={}
 
@@ -67,7 +64,7 @@ class Abel_object():
             print('Incorrect data shape')
             raise ValueError
         self.data_polar, r_grid, theta_grid = polar.reproject_image_into_polar(
-            data, origin=(self.center_x, self.center_y), dr=self.dr, dt=self.d_alpha, Jacobian=True)
+            data, origin=(self.center_rows, self.center_cols), dr=self.dr, dt=self.d_alpha, Jacobian=True)
 
     def show(self, data):
         plt.figure()
@@ -127,156 +124,151 @@ class Abel_object():
             print((-1)**(k-l)*2**(2*l+1)/factorial(k-l)*self.c(n,k,l))
         return sM
 
-    def M(self,N_R,n,k):
+    def M(self):
             ''' This function calculates the upper triangular transformation matrices Mn,n-2k using the analytical formulas
-            from Table I. I checked that it's equal to M_eqn13(N_R,n,k). However it's faster than M_eq13 so this is the function
+            from Table I. It stores in a dictionnary the Mn,n-2k for k != 0 and Mn,n^-1 otherwise. 
+            I checked that it's equal to M_eqn13(N_R,n,k). However it's faster than M_eq13 so this is the function
             actually used '''
-            M = np.zeros((N_R,N_R))
             dr_over2 = self.dr/2
             coeff = self.dr*self.d_alpha
-            
-            for i in range(0,N_R):
-                R_ip = self.R_vector[i:N_R]
+            # Initialize dictionnary
+            for n in range(2 * self.N, -1, -1):  # reversed loop from 2N to 0 included
+                N_threshold = self.N - ((n+1) // 2) #Threshold for entering the sum in equation 19 if smaller than N        
+                for k in np.arange(N_threshold,-1,-1):  #Going backwards since range function in Python is a real pain  
+                    self.M_temp_dic[(n+2*k,k)] = np.zeros((self.N_R,self.N_R))
+
+            # Loop along each radius
+            for i in range(0,self.N_R):                
+                R_ip = self.R_vector[i:self.N_R]
                 R_minus = R_ip[0] - dr_over2 # Ri v = Ri - DeltaR/2
                 R_plus = R_ip[0] + dr_over2 # Ri v = Ri - DeltaR/2
                 R_plus_frac = R_plus/R_ip  # Ri ^ / Ri
-                R_plus_frac[0] = 1  # Force first value to be 1 to keep the square root well defined
+                R_plus_frac[0] = 1  # Force first value to be 1 to keep the square root + arcsin well defined
                 R_minus_frac = R_minus/R_ip # Ri v  / Ri 
                 sqrtR_plus = np.sqrt(1-(R_plus_frac)**2) # (1 - (Ri ^  / Ri)^2)^1/2
                 sqrtR_minus = np.sqrt(1-(R_minus_frac)**2) # (1 - (Ri v  / Ri)^2)^1/2
+                asin_Rdiff =  np.arcsin(R_plus_frac) - np.arcsin(R_minus_frac) # asin(Ri ^ / Ri) - asin(Ri v / Ri)
 
-                if np.mod(n,2) != 0:
-                    asin_Rdiff =  np.arcsin(R_plus_frac) - np.arcsin(R_minus_frac) # asin(Ri ^ / Ri) - asin(Ri v / Ri)
-                if(n==0 and k==0): # M00
-                    M_temp = 2*coeff*(sqrtR_minus-sqrtR_plus)
-                elif(n==1 and k==0): # M11                 
-                    M_temp = coeff*\
-                            (R_minus_frac*sqrtR_minus-R_plus_frac*sqrtR_plus+asin_Rdiff)
-                elif(n==2 and k==0): # M22
-                    M_temp = 2*coeff/3*\
-                            (sqrtR_minus*(2+R_minus_frac**2)-sqrtR_plus*(2+R_plus_frac**2))
-                elif(n==2 and k==1): # M20
-                    M_temp = coeff/3*(sqrtR_plus**3-sqrtR_minus**3)
-                elif(n==3 and k==0): # M33
-                    M_temp = coeff/4*\
-                            (R_minus_frac*sqrtR_minus*(3+2*R_minus_frac**2)
-                                -R_plus_frac*sqrtR_plus*(3+2*R_plus_frac**2)\
-                                +3*asin_Rdiff)
-                elif(n==3 and k==1): # M31
-                    M_temp = 3*coeff/8*\
-                            (R_minus_frac*sqrtR_minus*(-1+2*R_minus_frac**2)\
-                                -R_plus_frac*sqrtR_plus*(-1+2*R_plus_frac**2)\
-                                -asin_Rdiff)                        
-                elif(n==4 and k==0): # M44
-                    M_temp = 2*coeff/15*\
-                            (sqrtR_minus*(8+4*R_minus_frac**2+3*R_minus_frac**4)\
-                                -sqrtR_plus*(8+4*R_plus_frac**2+3*R_plus_frac**4))
-                elif(n==4 and k==1): # M42
-                    M_temp = coeff/3*\
-                            (sqrtR_plus**3*(2+3*R_plus_frac**2)\
-                                -sqrtR_minus**3*(2+3*R_minus_frac**2))
-                elif(n==4 and k==2): # M40 (error in the article)
-                    M_temp = coeff/(60)*\
-                            (sqrtR_plus**3*(19+51*R_plus_frac**2)\
-                                -sqrtR_minus**3*(19+51*R_minus_frac**2))
-                elif(n==5 and k==0): # M55
-                    M_temp = coeff/24*\
-                            (sqrtR_minus*R_minus_frac*(15+10*R_minus_frac**2+8*R_minus_frac**4)\
-                                -sqrtR_plus*R_plus_frac*(15+10*R_plus_frac**2+8*R_plus_frac**4)\
-                                +15*asin_Rdiff)                                         
-                elif(n==5 and k==1): # M53
-                    M_temp = 7*coeff/48*\
-                            (sqrtR_minus*R_minus_frac*(-3-2*R_minus_frac**2+8*R_minus_frac**4)\
-                                -sqrtR_plus*R_plus_frac*(-3-2*R_plus_frac**2+8*R_plus_frac**4)\
-                                -3*asin_Rdiff)        
-                elif(n==5 and k==2): # M51
-                    M_temp = coeff/64*\
-                            (sqrtR_minus*R_minus_frac*(-81-134*R_minus_frac**2+296*R_minus_frac**4)\
-                                -sqrtR_plus*R_plus_frac*(-81-134*R_plus_frac**2+296*R_plus_frac**4)\
-                                -81*asin_Rdiff)     
-                elif(n==6 and k==0): # M66 (not in the article)
-                    M_temp = 2*coeff/35*\
-                            (sqrtR_minus*(16+8*R_minus_frac**2+6*R_minus_frac**4+5*R_minus_frac**6)\
-                                -sqrtR_plus*(16+8*R_plus_frac**2+6*R_plus_frac**4+5*R_plus_frac**6))                                     
-                elif(n==6 and k==1): # M64 (not in the article)
-                    M_temp = coeff/35*\
-                            (sqrtR_plus**3*(24+36*R_plus_frac**2+45*R_plus_frac**4)\
-                                -sqrtR_minus**3*(24+36*R_minus_frac**2+45*R_minus_frac**4))
-                elif(n==6 and k==2): # M62 (not in the article)
-                    M_temp = coeff/84*\
-                                (sqrtR_plus**3*(422 + 633*R_plus_frac**2 + 975*R_plus_frac**4)\
-                                -sqrtR_minus**3*(422 + 633*R_minus_frac**2 + 975*R_minus_frac**4))
-                elif(n==6 and k==3): # M60 (not in the article)                     
-                    M_temp = coeff/1680*\
-                            (sqrtR_plus**3*(-536 - 1329*R_plus_frac**2 + 2670*R_plus_frac**4)
-                            -sqrtR_minus**3*(-536 - 1329*R_minus_frac**2 + 2670*R_minus_frac**4))
-                else: #Take the numerical solution otherwise
-                    for ip in range(i,N_R):
-                        M_temp = np.array([self.C(n,k,l)*self.dr*self.d_alpha* \
-                                            self.Gammma(n,k,l,i,ip) for l in range(0,max(k-1,0)+1)]).sum()                                
-                M[i,i:N_R] = M_temp
-                
-            return M
+                for m in range(2 * self.N, -1, -1):  # reversed loop from 2N to 0 included
+                    N_threshold = self.N - ((m+1) // 2) #Threshold for entering the sum in equation 19 if smaller than N
+                    for k in np.arange(N_threshold,-1,-1):  #Going backwards since range function in Python is a real pain 
+                        n = m + 2 * k 
+                        if(n==0 and k==0): # M00
+                            M_temp = 2*coeff*(sqrtR_minus-sqrtR_plus)
+                        elif(n==1 and k==0): # M11                 
+                            M_temp = coeff*\
+                                    (R_minus_frac*sqrtR_minus-R_plus_frac*sqrtR_plus+asin_Rdiff)
+                        elif(n==2 and k==0): # M22
+                            M_temp = 2*coeff/3*\
+                                    (sqrtR_minus*(2+R_minus_frac**2)-sqrtR_plus*(2+R_plus_frac**2))
+                        elif(n==2 and k==1): # M20
+                            M_temp = coeff/3*(sqrtR_plus**3-sqrtR_minus**3)
+                        elif(n==3 and k==0): # M33
+                            M_temp = coeff/4*\
+                                    (R_minus_frac*sqrtR_minus*(3+2*R_minus_frac**2)
+                                        -R_plus_frac*sqrtR_plus*(3+2*R_plus_frac**2)\
+                                        +3*asin_Rdiff)
+                        elif(n==3 and k==1): # M31
+                            M_temp = 3*coeff/8*\
+                                    (R_minus_frac*sqrtR_minus*(-1+2*R_minus_frac**2)\
+                                        -R_plus_frac*sqrtR_plus*(-1+2*R_plus_frac**2)\
+                                        -asin_Rdiff)                        
+                        elif(n==4 and k==0): # M44
+                            M_temp = 2*coeff/15*\
+                                    (sqrtR_minus*(8+4*R_minus_frac**2+3*R_minus_frac**4)\
+                                        -sqrtR_plus*(8+4*R_plus_frac**2+3*R_plus_frac**4))
+                        elif(n==4 and k==1): # M42
+                            M_temp = coeff/3*\
+                                    (sqrtR_plus**3*(2+3*R_plus_frac**2)\
+                                        -sqrtR_minus**3*(2+3*R_minus_frac**2))
+                        elif(n==4 and k==2): # M40 (error in the article)
+                            M_temp = coeff/(60)*\
+                                    (sqrtR_plus**3*(19+51*R_plus_frac**2)\
+                                        -sqrtR_minus**3*(19+51*R_minus_frac**2))
+                        elif(n==5 and k==0): # M55
+                            M_temp = coeff/24*\
+                                    (sqrtR_minus*R_minus_frac*(15+10*R_minus_frac**2+8*R_minus_frac**4)\
+                                        -sqrtR_plus*R_plus_frac*(15+10*R_plus_frac**2+8*R_plus_frac**4)\
+                                        +15*asin_Rdiff)                                         
+                        elif(n==5 and k==1): # M53
+                            M_temp = 7*coeff/48*\
+                                    (sqrtR_minus*R_minus_frac*(-3-2*R_minus_frac**2+8*R_minus_frac**4)\
+                                        -sqrtR_plus*R_plus_frac*(-3-2*R_plus_frac**2+8*R_plus_frac**4)\
+                                        -3*asin_Rdiff)        
+                        elif(n==5 and k==2): # M51
+                            M_temp = coeff/64*\
+                                    (sqrtR_minus*R_minus_frac*(-81-134*R_minus_frac**2+296*R_minus_frac**4)\
+                                        -sqrtR_plus*R_plus_frac*(-81-134*R_plus_frac**2+296*R_plus_frac**4)\
+                                        -81*asin_Rdiff)     
+                        elif(n==6 and k==0): # M66 (not in the article)
+                            M_temp = 2*coeff/35*\
+                                    (sqrtR_minus*(16+8*R_minus_frac**2+6*R_minus_frac**4+5*R_minus_frac**6)\
+                                        -sqrtR_plus*(16+8*R_plus_frac**2+6*R_plus_frac**4+5*R_plus_frac**6))                                     
+                        elif(n==6 and k==1): # M64 (not in the article)
+                            M_temp = coeff/35*\
+                                    (sqrtR_plus**3*(24+36*R_plus_frac**2+45*R_plus_frac**4)\
+                                        -sqrtR_minus**3*(24+36*R_minus_frac**2+45*R_minus_frac**4))
+                        elif(n==6 and k==2): # M62 (not in the article)
+                            M_temp = coeff/84*\
+                                        (sqrtR_plus**3*(422 + 633*R_plus_frac**2 + 975*R_plus_frac**4)\
+                                        -sqrtR_minus**3*(422 + 633*R_minus_frac**2 + 975*R_minus_frac**4))
+                        elif(n==6 and k==3): # M60 (not in the article)                     
+                            M_temp = coeff/1680*\
+                                    (sqrtR_plus**3*(-536 - 1329*R_plus_frac**2 + 2670*R_plus_frac**4)
+                                    -sqrtR_minus**3*(-536 - 1329*R_minus_frac**2 + 2670*R_minus_frac**4))
+                        else: #Take the numerical solution otherwise
+                            for ip in range(i,self.N_R):
+                                M_temp = np.array([self.C(n,k,l)*self.dr*self.d_alpha* \
+                                                    self.Gammma(n,k,l,i,ip) for l in range(0,max(k-1,0)+1)]).sum()                                                    
+                        self.M_temp_dic[(n,k)][i,i:self.N_R] = M_temp
+                if not(np.mod(i,self.N_R/10)):
+                    print(i / self.N_R * 100, " %")                    
+            print(100, " %")     
+            # Transformation of the diagonal value of the dictionnary to store the inverse of M_nn               
+            for n in range(2 * self.N, -1, -1):  # reversed loop from 2N to 0 included
+                self.M_temp_dic[(n,0)] = np.linalg.inv(self.M_temp_dic[(n,0)])  # inverse of M_nn
 
     def precalculate(self):
-        N = self.N
         filename = 'dr_' + (str(self.dr) + '_da_' + '{:.2f}'.format(self.d_alpha_deg) + '_N_' + \
-                            str(self.N) + '_center_x_' + \
-                            str(self.center_x) + '_y_' + str(self.center_y) + \
+                            str(self.N) + '_center_rows_' + \
+                            str(self.center_rows) + '_cols_' + str(self.center_cols) + \
                             '_Rmax_' + str(self.Rmax)).replace('.','p') + '.npy'
         print(filename)
-        if os.path.isfile('M_inv_'+filename):
+        if os.path.isfile('M_dic_'+filename):
+        # if None:
             print('matrices already precalculated, loading them...')
-            self.M_inv = np.load('M_inv_'+filename, allow_pickle='TRUE').item()
-            self.Mnk = np.load('Mnk_'+filename, allow_pickle='TRUE').item()
+            self.M_temp_dic = np.load('M_dic_'+filename, allow_pickle='TRUE').item()
         else:
             print('precalculating matrices...')
-            for k in range(2 * self.N, -1, -1):  # reversed loop from 2N to 0 included
-                self.M_inv[k] = np.linalg.inv(self.M(self.N_R, k, 0))  # inverse of M_kk
-                N_threshold = self.N - ((k+1) // 2) #Threshold for entering the sum in equation 19 if smaller than N                                        
-                for i in range(N_threshold,0,-1):  #Going backwards since range function in Python is a real pain  
-                    self.Mnk[(k + 2 * i, i)] = self.M(self.N_R, k + 2 * i, i)
-                try:
-                    self.parent.progress_precalc.setValue(int((2*N-k + 1) / (2 * self.N + 1) * 100))
-                    self.parent.progress_precalc.repaint()
-                except AttributeError:
-                    print(int((2*self.N - k + 1) / (2 * self.N + 1) * 100), " %")                    
-
+            self.M()            
             print('precalculation done, saving matrices as ', filename)
-            np.save('M_inv_' + filename, self.M_inv)
-            np.save('Mnk_' + filename, self.Mnk)
+            np.save('M_dic_' + filename, self.M_temp_dic)
 
     def invert(self):         
         # Note (Constant): I removed the definition from Dominique who was first storing the delta_k
         # and then using them to calculate the matrice element.
         # Since we go from high k to low k, we can only load and work with
-        # only one at a time avoiding unecessary loops.
+        # only one at a time avoiding unecessary storing and loops.
         Th_dist = self.data_polar[np.arange(0,self.N_R), :] #Theta distribution for all radius
         sTh = np.abs(np.sin(self.alpha_vector)) # Absolute value of sin(theta)
         cTh = np.cos(self.alpha_vector) # cos(theta)
-        for k in range(2 * self.N, -1, -1):
+        for n in range(2 * self.N, -1, -1):  # reversed loop from 2N to 0 included
             # Application of eqn. 16
-            delta = (2 * k + 1) / 2 * \
-                    np.trapz(sTh*eval_legendre(k, cTh)*Th_dist,dx=self.d_alpha)                     
-                        # new note from Constant (2021/10/25):
-                        # the coefficient has been removed such that the definition is consistent with the article
-                        # old note from Dominique:
-                        # I added the 0.5 because we integrate between 0 and 2pi
-                        # instead of between 0 and pi
-            # Application of eqn. 19 
-            N_threshold = self.N - ((k+1) // 2) #Threshold for entering the sum in equation 19 if smaller than N 
+            delta_corr = (2 * n + 1) / 2 * np.trapz(sTh*eval_legendre(n, cTh)*Th_dist,dx=self.d_alpha) #Calculate delta
             # Right side of eqn.19
-            m2 = delta                
-            if N_threshold:
-                m2 -= np.array([np.dot(self.Mnk[(k + 2 * i, i)], self.F[k + 2 * i]) \
-                for i in range(N_threshold,0,-1)]).sum(axis=0)  #Going backwards since range function in Python is a real pain                                  
-            self.F[k] = np.dot(self.M_inv[k],m2)
+            N_threshold = self.N - ((n+1) // 2) # Threshold for entering the sum in equation 19 if smaller than N                            
+            if N_threshold: # Check if there is a need to enter into the sum
+                # Update values of delta
+                delta_corr -= np.array([np.dot(self.M_temp_dic[(n+2*k,k)], self.F[n+2*k]) \
+                for k in range(N_threshold,0,-1)]).sum(axis=0)  # Going backwards since range function in Python is a real pain       
+            # Application of eqn. 19                            
+            self.F[n] = np.dot(self.M_temp_dic[(n,0)],delta_corr)
 
     def calculate_beta(self):
         for k in range(2 * self.N, -1, -1):
             self.beta[k] = self.F[k]/self.F[0]
 
-    def make_inverse_image(self,L,Nmax = 6,even = 0):       
+    def make_inverse_image(self,L,Nmax = 3,even = 0):       
         if np.mod(L,2):
             L = L + 1     
         X_vect = np.arange(-L/2,L/2)
@@ -297,7 +289,6 @@ class Abel_object():
 
 if __name__ == '__main__':
 
-
     path = 'Q:\LIDyL\Atto\ATTOLAB\SE1\Data_Experiments\SE1_2021\\2021-02-15\\'
     filename='Ar-He_PE_Vrep1p0_Vext_0p794_MCP700+300_PMCP2p6em5_7p1em6_avg100_WITHfilter_WITHdrilled_WITHSB_2p3W_better.npy'    
     # data = np.load(path+filename)
@@ -309,16 +300,13 @@ if __name__ == '__main__':
         raw_datas = file['Raw_datas']   
         data = np.asarray(raw_datas[path2][0])
 
-
-
-
     ############# INPUT PARAMETERS ##########################################
     transpose = False
     remove_bkg = False
     # Image orientation:  “television” convention, where IM[0, 0] refers to the upper left corner of the image. 
     # This definition might not be consistent with the older definition of pyabel
-    center_x = 1012  # Horizontal axis (COL)
-    center_y = 1037   # Vertical axis (ROW)
+    center_x = 1012 # Horizontal axis (COL)
+    center_y = 1037 # Vertical axis (ROW)
     #Check ouput of abel.tools.center functions to test:
     #  abel.tools.center.center_image(data)
 
@@ -326,7 +314,7 @@ if __name__ == '__main__':
     dr = 1  # increment in radius r
     N = 3  # number of photons. Determines the number of legendre polynomials to use (which is equal to 2N+1)
     # ex: if N=1 then P0, P1 and P2 are used. If N=2 then P0 to P4 are used.
-    Rmax = 300  # maximum radius up to which the image is inverted
+    Rmax = 1000  # maximum radius up to which the image is inverted
     #########################################################################
     if transpose:
         data = np.transpose(data)
@@ -336,14 +324,13 @@ if __name__ == '__main__':
     # abel_obj.show(data)
     abel_obj.precalculate()
     t = 0
-    L = 1
-    t_init = time.time()
-
+    L = 10
     for i in range(L):
         t_init = time.time()
         abel_obj.invert()
         t += time.time()-t_init        
     print(t/L)
+    # abel_obj.invert()
 
     fig = plt.figure(num=None, figsize=(9, 4.5), dpi=100, tight_layout=True)
     ax = plt.subplot(1,1,1)
@@ -365,37 +352,7 @@ if __name__ == '__main__':
     reconstr = True
     if reconstr:
 
-        S_inv = abel_obj.make_inverse_image(L,4,1)
-        # Reconstruction of the Abel-inverted image
-        # Nr = int(Rmax/dr)
-        # Rvect = np.linspace(dr, Rmax, Nr)
-        # Sinv = np.zeros([2048, 2048])
-        # X_vect = np.arange(2048)-center_x
-        # Y_vect = np.arange(2048)-center_y
-        
-        # h = {}
-        # for i in range(2*N):
-        #     h[i] = interp1d(Rvect, abel_obj.F[i])
-        # # h0 = interp1d(Rvect, abel_obj.F[0])
-        # # h2 = interp1d(Rvect, abel_obj.F[2])
-        # # h4 = interp1d(Rvect, abel_obj.F[4])
-        # # h6 = interp1d(Rvect, abel_obj.F[6])
-
-        # L = len(X_vect)
-        # S = np.zeros([L**2])
-        # R = np.sqrt(X_vect**2+Y_vect[:,np.newaxis]**2).flatten()
-        # cosTh = np.cos(np.arctan2(X_vect,Y_vect[:,np.newaxis])).flatten()
-        # mask = np.logical_and(R>0, R<Rmax)
-        # cosTh = cosTh[mask]
-        # R = R[mask]
-        # S[mask] = 1/R*(np.array([h[i](R)*eval_legendre(i,cosTh) for i in range(2*N)]).sum(axis=0)) 
-        # S[mask] = 1/R*(h0(R) 
-        #                 + h2(R)*eval_legendre(2, cosTh) 
-        #                 + h4(R)*eval_legendre(4, cosTh) 
-                        
-        #                     )
-        # Sinv =np.transpose(S.reshape([L,L]))    
-        # Sinv = S.reshape([L,L])   
+        S_inv = abel_obj.make_inverse_image(L,3,0)
         fig_im, axs_im = plt.subplots(2, 1,sharex= True,sharey='col')  
         # plt.imshow(Sinv, origin='lower', cmap='jet')
         axs_im[0].imshow(S_inv, origin='lower', cmap='jet')
