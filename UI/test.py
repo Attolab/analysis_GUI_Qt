@@ -15,8 +15,6 @@ from panels.VMI_panel import VMIPanel
 from panels.tableSel_panel import TableSelPanel
 # from panels.DockTitleBar import DockTitleBar
 from panels.VMI_toolbox_panel import VMIToolBoxPanel
-
-from functions import abel_davis_class
 import sys, traceback
 import h5py
 import numpy as np

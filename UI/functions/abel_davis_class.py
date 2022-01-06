@@ -4,7 +4,6 @@ from abel.tools import polar
 from scipy.special import eval_legendre, hyp2f1
 from scipy.interpolate import interp1d
 from math import factorial
-import time
 import h5py
 import os
 class Abel_object():
@@ -288,6 +287,7 @@ class Abel_object():
         return S.reshape([L,L])
 
 if __name__ == '__main__':
+    import time
 
     path = 'Q:\LIDyL\Atto\ATTOLAB\SE1\Data_Experiments\SE1_2021\\2021-02-15\\'
     filename='Ar-He_PE_Vrep1p0_Vext_0p794_MCP700+300_PMCP2p6em5_7p1em6_avg100_WITHfilter_WITHdrilled_WITHSB_2p3W_better.npy'    
@@ -360,6 +360,4 @@ if __name__ == '__main__':
 
 
 plt.show()
-# plt.figure()
-# plt.imshow(Sinv2, origin='lower', cmap='jet')
-# plt.show()
+
